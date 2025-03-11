@@ -1,0 +1,23 @@
+env/*
+__pycache__
+.DS_Store
+
+Koala-manygen/lib
+_html_results/
+_plot_result/
+_csv_result/
+_supergraph_result/
+
+*.class
+
+.metadata
+
+## 絶対パスを記したファイル, ローカルで指定
+constants.py
+ResourceFile.java
+ResourceFile.class
+
+# 実行のたびに結果が変わるのでgitignoreに追加
+data/community_csv/coauthors_community.csv
+
+Koala-manygen/layoutsToEvaluate
