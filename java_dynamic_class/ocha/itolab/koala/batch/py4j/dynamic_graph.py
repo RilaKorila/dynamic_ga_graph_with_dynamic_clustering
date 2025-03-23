@@ -1,15 +1,12 @@
-from data_process.NBAF_Coauthorship_12dim import get_graph_sequence_from_original_csvfile
+from data_process.CitHepPh import get_graph_sequence_from_original_file, setup_data
 import networkx as nx
-from community_detect import apply_louvain_community_detection
 
 #### DynamicGraphクラス ####
 class DynamicGraph:
     def __init__(self):
         ## データを取得 （使用するデータを変えるときはここを変更する）
-        self.graph_sequence = get_graph_sequence_from_original_csvfile()
-
-
-
+        self.graph_sequence = get_graph_sequence_from_original_file(1)
+        setup_data()
         self.weight_type = "overlap" # ノードの Live Time オーバーラップ
         # self.weight_type = "frequency" # エッジの出現回数
         self.node_time_live = self.compute_node_time_live()

@@ -6,8 +6,15 @@ import ocha.itolab.koala.core.mesh.*;
 
 public class Graph {
 	public int attributeType = -1;
-	public static int ATTRIBUTE_VECTOR = 1;
-	public static int ATTRIBUTE_DISSIM = 2;
+	public int ATTRIBUTE_VECTOR = 1;
+	public int ATTRIBUTE_DISSIM = 2;
+	// 座標ベースの距離計算を行うモード
+	public int ATTRIBUTE_COORDINATE_BASED = 3;
+	// クラスタ情報に基づく距離計算を行うモード
+	public int ATTRIBUTE_CLUSTER_BASED = 4;
+	// #vectorsタグがあるときは、readVector()内で設定される。
+	// Koalaでclisteringしない場合はいらない情報なはずなので、別のモードを追加する
+	public int ATTRIBUTE_VECTOR_NO_CLUSTERING = 5;
 
 	public String vectorname[];
 	public int maxDegree = 0;

@@ -44,7 +44,10 @@ package ocha.itolab.koala.constants;
 public enum ResourceFile {
     RESULT("/_csv_resultへの絶対パス"),
     EVALUATE_RESULT("layoutsToEvaluate/ への絶対パス"),
-    DATA_CSV("cleaned_NBAF_Coauthorship_12dim.csv への絶対パス");
+    DATA_CSV("cleaned_NBAF_Coauthorship_12dim.csv への絶対パス"),
+    COMMUNITY_CSV("path"),
+    CIT_HEP_PH_DATA_CSV("path"),
+    CIT_HEP_PH_COMMUNITY_CSV("path");
 
     private String path;
 
@@ -56,16 +59,21 @@ public enum ResourceFile {
         return this.path;
     }
 }
-
 ```
 
 ##### テンプレートを編集
 
-以下の 2 つの絶対パス
+以下の絶対パスを設定する:
 
-- `dynamic_ga_graph_with_dynamic_clustering/_csv_result`
-- `dynamic_ga_graph_with_dynamic_clustering/layoutsToEvaluate`
-- `dynamic_ga_graph_with_dynamic_clustering/Koala-manygen/cleaned_NBAF_Coauthorship_12dim.csv`
+- RESULT: `{プロジェクトルート}/_csv_result`
+- EVALUATE_RESULT: `{プロジェクトルート}/layoutsToEvaluate/`
+- DATA_CSV: `{プロジェクトルート}/Koala-manygen/NBAF_Coauthorship_12dim.csv`
+- COMMUNITY_CSV: `{プロジェクトルート}/data/community_csv/coauthors_community.csv`
+- CIT_HEP_PH_DATA_CSV: `{プロジェクトルート}/data/Cit-HepPh/Cit-HepPh_connectivity.csv`
+- CIT_HEP_PH_COMMUNITY_CSV: `{プロジェクトルート}/data/Cit-HepPh/coms/runDynamicModularity_Cit-HepPh_com_1_nodes.csv`
+
+※ {プロジェクトルート}は、実際のプロジェクトのルートディレクトリの絶対パスに置き換えてください。
+(Cit-HepPh/Cit-HepPh_connectivity.csvは、run.shを実行した時に生成されるので存在していなくて初期設定時に問題ない。coms/配下は、DynaMoの実行結果をこのフォルダに配置する。)
 
 ### Java の準備 (基本的に Mac かつ Eclipse 入れてない場合)
 

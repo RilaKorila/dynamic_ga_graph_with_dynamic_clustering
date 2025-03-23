@@ -95,6 +95,16 @@ public class GraphFileReader {
 				phase = (phase == 2) ? 0 : (phase + 1);
 			}
 
+			// #vectorタグも、#dissimilarityタグもない場合
+			if (graph.attributeType == -1) {
+				// レイアウトファイルから座標情報を読み込む場合
+
+				// 座標情報が利用可能な場合
+				graph.attributeType = graph.ATTRIBUTE_COORDINATE_BASED;
+				// クラスタ情報を使用する場合
+				// graph.attributeType = graph.ATTRIBUTE_CLUSTER_BASED;
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

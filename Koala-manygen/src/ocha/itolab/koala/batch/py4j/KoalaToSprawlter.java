@@ -10,7 +10,10 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class KoalaToSprawlter {
-	static String infile = ResourceFile.DATA_CSV.path();
+	// NBAF_Coauthorship_12dim.csvを読み込む
+	// static String infile = ResourceFile.DATA_CSV.path();
+	// Cit-HepPhのデータを読み込む
+	static String infile = ResourceFile.CIT_HEP_PH_DATA_CSV.path();
 	static String outfiledir = ResourceFile.RESULT.path();
 	static Graph graph;
 	static int SMOOTHING_ITERATION = 100;

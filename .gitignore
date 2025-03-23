@@ -19,5 +19,6 @@ ResourceFile.class
 
 # 実行のたびに結果が変わるのでgitignoreに追加
 data/community_csv/coauthors_community.csv
+data/Cit-HepPh/*
 
 Koala-manygen/layoutsToEvaluate

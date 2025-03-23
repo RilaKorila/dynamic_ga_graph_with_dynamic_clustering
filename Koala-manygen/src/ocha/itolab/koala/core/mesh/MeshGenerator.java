@@ -35,7 +35,8 @@ public class MeshGenerator {
 	static int numvThreshold = 1;
 	public static double clustersizeRatio = 0.65; // Experiment 1-S
 
-	private static String filename = ResourceFile.COMMUNITY_CSV.path();
+	// private static String filename = ResourceFile.COMMUCIT_CSV.path();
+	private static String filename = ResourceFile.CIT_HEP_PH_COMMUNITY_CSV.path();
 
 	public static Mesh generate(Graph g) {
 		Mesh m = new Mesh();
@@ -242,7 +243,7 @@ public class MeshGenerator {
 	 */
 	public static void calcDistancesForLayout(Mesh mesh, Graph graph) {
 		graph.setupDissimilarityForPlacement();
-
+		System.out.println("========== setupDissimilarityForPlacement ==========");
 		// Setup an array for dissimilarity calculation
 		for (int i = 0; i < mesh.getNumVertices(); i++) {
 			Vertex v = mesh.getVertex(i);
@@ -258,6 +259,7 @@ public class MeshGenerator {
 				// calculate inner product
 				double dis1 = 0.0;
 				if (graph.attributeType == graph.ATTRIBUTE_VECTOR) {
+					// ベクトルのコサイン類似度を計算
 					double average1[] = new double[graph.vectorname.length];
 					double average2[] = new double[graph.vectorname.length];
 					for (int k = 0; k < graph.vectorname.length; k++) {
@@ -285,10 +287,29 @@ public class MeshGenerator {
 				}
 
 				// retrieve distance value
-				else {
+				else if (graph.attributeType == graph.ATTRIBUTE_DISSIM) {
+					// 事前に計算された非類似度（dissimilarity）を直接使用
 					Node n1 = (Node) v1.nodes.get(0);
 					Node n2 = (Node) v2.nodes.get(0);
 					dis1 = n1.getDisSim1(n2.getId());
+				} else if (graph.attributeType == graph.ATTRIBUTE_COORDINATE_BASED) {
+					// 座標ベースの距離計算
+					Node n1 = (Node) v1.nodes.get(0);
+					Node n2 = (Node) v2.nodes.get(0);
+					// ユークリッド距離を計算（getX()とgetY()を使用）
+					double dx = n1.getX() - n2.getX();
+					double dy = n1.getY() - n2.getY();
+					dis1 = Math.sqrt(dx * dx + dy * dy);
+					// 正規化（0-1の範囲に収める）
+					dis1 = Math.min(1.0, dis1 / 100.0); // 100.0は適切なスケール係数に調整する
+				} else if (graph.attributeType == graph.ATTRIBUTE_CLUSTER_BASED) {
+					// クラスタベースの距離計算
+					Node n1 = (Node) v1.nodes.get(0);
+					Node n2 = (Node) v2.nodes.get(0);
+					// 同じクラスタ内なら距離を小さく、異なるクラスタなら距離を大きく設定
+					dis1 = (n1.getColorId() == n2.getColorId()) ? 0.1 : 1.0;
+				} else {
+
 				}
 
 				// for each pair of the nodes belonging to the two vertices

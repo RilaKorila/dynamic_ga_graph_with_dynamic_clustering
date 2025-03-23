@@ -32,9 +32,21 @@ public class NodeDistanceCalculator {
 					ret1 /= d12;
 			}
 			ret1 = 1.0 - ret1;
-		} else {
+		} else if (g.attributeType == g.ATTRIBUTE_DISSIM) {
 			int id2 = n2.getId();
 			ret1 = n1.getDisSim1(id2);
+		} else if (g.attributeType == g.ATTRIBUTE_DISSIM) {
+			int id2 = n2.getId();
+			ret1 = n1.getDisSim1(id2);
+		} else if (g.attributeType == g.ATTRIBUTE_COORDINATE_BASED) {
+			double dx = n1.getX() - n2.getX();
+			double dy = n1.getY() - n2.getY();
+			ret1 = Math.sqrt(dx * dx + dy * dy);
+			ret1 = Math.min(1.0, ret1 / 100.0);
+		} else if (g.attributeType == g.ATTRIBUTE_CLUSTER_BASED) {
+			ret1 = (n1.getColorId() == n2.getColorId()) ? 0.1 : 1.0;
+		} else {
+			ret1 = 0.0;
 		}
 
 		double ret2 = 0.0;
@@ -60,13 +72,6 @@ public class NodeDistanceCalculator {
 				}
 			}
 		}
-		/*
-		 * int num = (num1 > num2) ? num1 : num2;
-		 * if(num <= 0)
-		 * ret2 = 1.0;
-		 * else
-		 * ret2 = (double)(num - count) / (double)num;
-		 */
 		int num = num1 + num2;
 		if (num <= 0)
 			ret2 = 1.0;
@@ -93,9 +98,13 @@ public class NodeDistanceCalculator {
 			else
 				ret1 /= (Math.sqrt(d1) * Math.sqrt(d2));
 			ret1 = 1.0 - ret1;
-		} else {
+		} else if (g.attributeType == g.ATTRIBUTE_DISSIM) {
 			int id2 = n2.getId();
 			ret1 = n1.getDisSim1(id2);
+		} else {
+			ret1 = 0.0;
+			// System.out.println("x座標: " + n1.x + ", y座標: " + n1.y);
+			// System.out.println("x座標: " + n2.x + ", y座標: " + n2.y);
 		}
 
 		boolean isConnected = g.isTwoNodeConnected(n1, n2);

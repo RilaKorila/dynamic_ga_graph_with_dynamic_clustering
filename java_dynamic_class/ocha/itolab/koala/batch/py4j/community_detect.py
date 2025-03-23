@@ -1,25 +1,17 @@
-import networkx as nx
+from constants import CIT_HepPh_DIR_PATH
 
-def apply_louvain_community_detection(G_super):
+def get_community_detection_result(timestamp: int):
     """
-    Applies Louvain community detection on the supergraph.
+    Get the community detection (DynaMo) result from the csv file.
+    """
+    # ファイルから読み込む
+    fname = f"{CIT_HepPh_DIR_PATH}coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
 
-    Parameters:
-    - G_super: Weighted NetworkX graph (Supergraph)
-
-    Returns:
-    - communities: Dictionary mapping nodes to community labels
-    """
-    partition = nx.community.louvain_communities(G_super, weight='weight', max_level=10)
-    return partition
-
-def write_community_detection_result(communities, file_name):
-    """
-    Writes the community detection result to a file.
-    """
-    # csvファイルに書き込む
-    with open(file_name, "w") as f:
-        for i, community in enumerate(communities):
-            # nodeのidをカンマ区切りで書き込む
-            f.write(",".join(community))
-            f.write("\n")
+    communities = []
+    with open(fname, "r") as f:
+        for line in f:
+            # 各行が各communitiyに属するnode_idがカンマ区切りで記載されている
+            community = line.strip().split(",")
+            communities.append(set(community))
+    
+    return communities

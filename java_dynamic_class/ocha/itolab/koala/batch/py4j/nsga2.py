@@ -3,14 +3,14 @@ import random
 
 import matplotlib.pyplot as plt
 import numpy as np
-from constants import PNG_PATH, SUPERGRAPH_PNG_PATH, COMMUNITY_DETECTION_RESULT_PATH
+from constants import PNG_PATH, SUPERGRAPH_PNG_PATH
 from deap import base, creator, tools
 from deap.benchmarks.tools import hypervolume
 from history_evaluation_stats import HistoryEvaluationStats
 from my_mutation import muSmall
 from layouts import define_layout, visualize_sammarized_graph
 from dynamic_graph import DynamicGraph
-from community_detect import apply_louvain_community_detection, write_community_detection_result
+from community_detect import get_community_detection_result
 
 class NSGA2:
     def __init__(self, obfunc, write_layout_file_func):
@@ -23,9 +23,8 @@ class NSGA2:
         # supergraphを作成する (community detectionも含む)
         dynamic_graph = DynamicGraph()
         
-        # Supergraph を構築し、Louvain で Community Detection を適用
-        communities = apply_louvain_community_detection(dynamic_graph.supergraph)
-        write_community_detection_result(communities, COMMUNITY_DETECTION_RESULT_PATH)
+        # Community Detection 
+        communities = get_community_detection_result(1)
 
         self.sammarized_graph = dynamic_graph.create_sammarized_graph(communities)
 
