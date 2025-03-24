@@ -212,6 +212,7 @@ class NSGA2:
 
         with open(PNG_PATH + fname, "a") as f:
             f.write(logbook.stream)
+            f.write("\n")
 
         # 最適計算の実行
         for gen in range(1, NGEN):
