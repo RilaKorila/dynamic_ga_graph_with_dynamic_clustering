@@ -125,9 +125,7 @@ def __write_connectivity(nodes, edges):
             f.write(f"{node_id},node_label_{node_id}\n")
             # 外向きエッジ
             outgoing = outgoing_edges.get(node_id, [])
-            print(f"outgoing: {len(outgoing)}")
             f.write(",".join(outgoing) + "\n")
             # 内向きエッジ  
             incoming = incoming_edges.get(node_id, [])
-            print(f"incoming: {len(incoming)}")
             f.write(",".join(incoming) + "\n")

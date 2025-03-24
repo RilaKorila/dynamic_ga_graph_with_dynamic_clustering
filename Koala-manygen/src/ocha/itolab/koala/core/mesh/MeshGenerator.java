@@ -243,7 +243,6 @@ public class MeshGenerator {
 	 */
 	public static void calcDistancesForLayout(Mesh mesh, Graph graph) {
 		graph.setupDissimilarityForPlacement();
-		System.out.println("========== setupDissimilarityForPlacement ==========");
 		// Setup an array for dissimilarity calculation
 		for (int i = 0; i < mesh.getNumVertices(); i++) {
 			Vertex v = mesh.getVertex(i);
