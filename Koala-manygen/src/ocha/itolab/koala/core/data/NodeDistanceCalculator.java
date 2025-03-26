@@ -18,9 +18,9 @@ public class NodeDistanceCalculator {
 		if (g.attributeType == g.ATTRIBUTE_VECTOR) {
 			double d1 = 0.0, d2 = 0.0;
 			for (int i = 0; i < g.vectorname.length; i++) {
-				ret1 += (n1.vector[i] * n2.vector[i]);
-				d1 += (n1.vector[i] * n1.vector[i]);
-				d2 += (n2.vector[i] * n2.vector[i]);
+				ret1 += (n1.vector[i] * n2.vector[i]); // 内積
+				d1 += (n1.vector[i] * n1.vector[i]); // ノード1のベクトルのノルムの二乗
+				d2 += (n2.vector[i] * n2.vector[i]); // ノード2のベクトルのノルムの二乗
 			}
 			if (ret1 < 0.0)
 				ret1 = 0.0;
@@ -29,21 +29,19 @@ public class NodeDistanceCalculator {
 				if (d12 < 1.0e-8)
 					ret1 = 0.0;
 				else
-					ret1 /= d12;
+					ret1 /= d12; // コサイン類似度を計算
 			}
-			ret1 = 1.0 - ret1;
+			ret1 = 1.0 - ret1; // 距離に変換（類似度が高いほど距離が小さくなる）
 		} else if (g.attributeType == g.ATTRIBUTE_DISSIM) {
 			int id2 = n2.getId();
 			ret1 = n1.getDisSim1(id2);
-		} else if (g.attributeType == g.ATTRIBUTE_DISSIM) {
-			int id2 = n2.getId();
-			ret1 = n1.getDisSim1(id2);
-		} else if (g.attributeType == g.ATTRIBUTE_COORDINATE_BASED) {
+		} else if (g.attributeType == g.ATTRIBUTE_COORDINATE_BASED) { // 座標ベース
 			double dx = n1.getX() - n2.getX();
 			double dy = n1.getY() - n2.getY();
 			ret1 = Math.sqrt(dx * dx + dy * dy);
 			ret1 = Math.min(1.0, ret1 / 100.0);
-		} else if (g.attributeType == g.ATTRIBUTE_CLUSTER_BASED) {
+		} else if (g.attributeType == g.ATTRIBUTE_CLUSTER_BASED) { // クラスタ情報ベース
+			// 同じクラスタであれば、距離を小さく(=0.1)、異なるクラスタであれば、距離を大きく(=1.0) 設定
 			ret1 = (n1.getColorId() == n2.getColorId()) ? 0.1 : 1.0;
 		} else {
 			ret1 = 0.0;

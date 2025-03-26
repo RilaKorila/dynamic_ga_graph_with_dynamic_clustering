@@ -99,10 +99,10 @@ public class GraphFileReader {
 			if (graph.attributeType == -1) {
 				// レイアウトファイルから座標情報を読み込む場合
 
-				// 座標情報が利用可能な場合
-				graph.attributeType = graph.ATTRIBUTE_COORDINATE_BASED;
+				// 座標情報が利用する場合
+				// graph.attributeType = graph.ATTRIBUTE_COORDINATE_BASED;
 				// クラスタ情報を使用する場合
-				// graph.attributeType = graph.ATTRIBUTE_CLUSTER_BASED;
+				graph.attributeType = graph.ATTRIBUTE_CLUSTER_BASED;
 			}
 
 		} catch (Exception e) {
