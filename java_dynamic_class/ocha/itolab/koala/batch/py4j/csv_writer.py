@@ -1,5 +1,6 @@
 import abc
 import csv
+import os
 
 from constants import PNG_PATH
 
@@ -64,7 +65,12 @@ class PenaltyCsvWriter(CsvWriter):
 
 
 class ClutterSprawlCsvWriter(CsvWriter):
-    fname = PNG_PATH + "clutter_sprawl_all_generation.csv"
+    @classmethod
+    def set_timestamp(cls, timestamp):
+        directory = PNG_PATH + f"{timestamp}/" # directoryが存在していなかったら作成する
+        os.makedirs(directory, exist_ok=True)
+        
+        cls.fname = directory + "clutter_sprawl_all_generation.csv"
 
     @classmethod
     def write_header(cls):

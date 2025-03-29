@@ -1,5 +1,6 @@
 package ocha.itolab.koala.batch.py4j;
 
+import java.io.File;
 import java.util.ArrayList;
 import ocha.itolab.koala.constants.ResourceFile;
 import ocha.itolab.koala.core.data.*;
@@ -13,8 +14,6 @@ public class KoalaToSprawlter {
 	// NBAF_Coauthorship_12dim.csvを読み込む
 	// static String infile = ResourceFile.DATA_CSV.path();
 	// Cit-HepPhのデータを読み込む
-	static String infile = ResourceFile.CIT_HEP_PH_DATA_CSV.path();
-	static String outfiledir = ResourceFile.RESULT.path();
 	static Graph graph;
 	static int SMOOTHING_ITERATION = 100;
 	static int NUM_PER_GENERATION = 20;
@@ -24,14 +23,17 @@ public class KoalaToSprawlter {
 	/**
 	 * Execute Koala and Sprawlter
 	 */
-	public static Map<String, Double> execute(double init[]) {
+	public static Map<String, Double> execute(final double init[], final int timestamp) {
 		System.out.println("Forcus条件適用なし");
+
+		// Cit-HepPhのデータを読み込む
+		final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
 
 		// double List から LinLogLayoutクラスのinitialPosに変換
 		generateInitPositionList(init);
 
 		// ---------- initial positionに基づいてグラフを生成 ----------
-		graph = GraphFileReader.readConnectivity(infile);
+		graph = GraphFileReader.readConnectivity(infile, timestamp);
 		graph.generateEdges();
 		for (int i = 0; i < SMOOTHING_ITERATION; i++) {
 			// ドロネー三角法を適用
@@ -86,14 +88,18 @@ public class KoalaToSprawlter {
 		LinLogLayout.setInitialPositionList(poslist);
 	}
 
-	static void writeLayoutFile(double init[], Integer generation, Integer id) {
-		String filename = outfiledir + "/layout" + generation + "-" + id + ".csv";
+	static void writeLayoutFile(double init[], int generation, int id, int timestamp) {
+		final String dirName = createDirectory(ResourceFile.RESULT.path() + "/" + timestamp + "/");
+		final String filename = dirName + "/layout" + generation + "-" + id + ".csv";
+
+		// Cit-HepPhのデータを読み込む
+		final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
 
 		// double List から LinLogLayoutクラスのinitialPosに変換
 		generateInitPositionList(init);
 
 		// ---------- initial positionに基づいてグラフを生成 ----------
-		graph = GraphFileReader.readConnectivity(infile);
+		graph = GraphFileReader.readConnectivity(infile, timestamp);
 		graph.generateEdges();
 		for (int i = 0; i < SMOOTHING_ITERATION; i++) {
 			// ドロネー三角法を適用
@@ -109,4 +115,16 @@ public class KoalaToSprawlter {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * ディレクトリが存在していなければ作成する
+	 * 
+	 * @param dirName ディレクトリのパス
+	 * @return ディレクトリのパス
+	 */
+	private static String createDirectory(final String dirName) {
+		new File(dirName).mkdirs();
+		return dirName;
+	}
+
 }

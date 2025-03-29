@@ -12,23 +12,18 @@
 
 > java_dynamic_class/ocha/itolab/koala/batch/py4j/constants.py
 
-##### テンプレート
+##### テンプレートの追加・編集
 
 ```python
-JAR_PATH = "path"
-
-CLASS_PATH = "path"
-
-PNG_PATH = "path"
+JAR_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/test/share/py4j/py4j0.10.9.5.jar"
+CLASS_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/java_dynamic_class"
+PNG_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/_plot_result/"
+SUPERGRAPH_PNG_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/_supergraph_result/"
+NBAF_COAUTHORS_CSV_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/Koala-manygen/NBAF_Coauthorship_12dim.csv"
+CIT_HEP_PH_DIR_PATH = "{プロジェクトルート}/d{プロジェクトルート}/ynamic_ga_graph_with_dynamic_clustering/data/Cit-HepPh/"
 ```
 
-##### テンプレートを編集
-
-以下の 3 つの絶対パス
-
-- `dynamic_ga_graph_with_dynamic_clustering/test/share/py4j/py4j0.10.9.5.jar`
-- `dynamic_ga_graph_with_dynamic_clustering/java_dynamic_class`
-- `dynamic_ga_graph_with_dynamic_clustering/_plot_result/`
+※ {プロジェクトルート}は、実際のプロジェクトのルートディレクトリの絶対パスに置き換える。
 
 #### 2 つ目: Java ファイル
 
@@ -36,18 +31,18 @@ PNG_PATH = "path"
 
 > Koala-manygen/src/ocha/itolab/koala/constants/ResourceFile.java
 
-##### テンプレート
+##### テンプレートの追加・編集
 
 ```java
 package ocha.itolab.koala.constants;
 
 public enum ResourceFile {
-    RESULT("/_csv_resultへの絶対パス"),
-    EVALUATE_RESULT("layoutsToEvaluate/ への絶対パス"),
-    DATA_CSV("cleaned_NBAF_Coauthorship_12dim.csv への絶対パス"),
-    COMMUNITY_CSV("path"),
-    CIT_HEP_PH_DATA_CSV("path"),
-    CIT_HEP_PH_COMMUNITY_CSV("path");
+    RESULT("{プロジェクトルート}/_csv_result"),
+    EVALUATE_RESULT("{プロジェクトルート}/layoutsToEvaluate/"),
+    DATA_CSV("{プロジェクトルート}/Koala-manygen/NBAF_Coauthorship_12dim.csv"),
+    COMMUNITY_CSV("{プロジェクトルート}/data/community_csv/coauthors_community.csv"),
+    CIT_HEP_PH_DATA_DIR("{プロジェクトルート}/data/Cit-HepPh/"),
+    CIT_HEP_PH_COMMUNITY_DIR("{プロジェクトルート}/data/Cit-HepPh/coms/");
 
     private String path;
 
@@ -61,19 +56,8 @@ public enum ResourceFile {
 }
 ```
 
-##### テンプレートを編集
-
-以下の絶対パスを設定する:
-
-- RESULT: `{プロジェクトルート}/_csv_result`
-- EVALUATE_RESULT: `{プロジェクトルート}/layoutsToEvaluate/`
-- DATA_CSV: `{プロジェクトルート}/Koala-manygen/NBAF_Coauthorship_12dim.csv`
-- COMMUNITY_CSV: `{プロジェクトルート}/data/community_csv/coauthors_community.csv`
-- CIT_HEP_PH_DATA_CSV: `{プロジェクトルート}/data/Cit-HepPh/Cit-HepPh_connectivity.csv`
-- CIT_HEP_PH_COMMUNITY_CSV: `{プロジェクトルート}/data/Cit-HepPh/coms/runDynamicModularity_Cit-HepPh_com_1_nodes.csv`
-
-※ {プロジェクトルート}は、実際のプロジェクトのルートディレクトリの絶対パスに置き換えてください。
-(Cit-HepPh/Cit-HepPh_connectivity.csvは、run.shを実行した時に生成されるので存在していなくて初期設定時に問題ない。coms/配下は、DynaMoの実行結果をこのフォルダに配置する。)
+※ {プロジェクトルート}は、実際のプロジェクトのルートディレクトリの絶対パスに置き換える。
+(coms/配下は、DynaMoの実行結果をこのフォルダに配置する。)
 
 ### Java の準備 (基本的に Mac かつ Eclipse 入れてない場合)
 

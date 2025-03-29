@@ -9,15 +9,16 @@ EE_RATIO = 0.5
 
 
 class HistoryEvaluationStats:
-    def __init__(self, receive_from_java_func, gene_length):
+    def __init__(self, receive_from_java_func, timestamp):
         print("過去の全ての世代を基準に評価値をスケール")
-        self.csv_fname = PNG_PATH + "evaluation_stats.csv"
+        ClutterSprawlCsvWriter.set_timestamp(timestamp)  # タイムスタンプを設定
+        self.csv_fname = PNG_PATH + f"{timestamp}/" +   "evaluation_stats.csv"
         self.sprawls = []
         self.nnpens = []
         self.nepens = []
         self.eepens = []
         self.receive_from_java_func = receive_from_java_func
-        self.gene_length = gene_length
+        self.timestamp = timestamp
         self.__set_column_to_csv()
 
     def add_individuals(self, new_individuals, generation):
@@ -30,7 +31,7 @@ class HistoryEvaluationStats:
         NN, NE, EEの算出をし、それぞれのリストに計算結果を保存する。ここでは正規化はされない。
         """
         for id, individual in enumerate(individuals):
-            results = self.receive_from_java_func(generation, id, individual, self.gene_length)
+            results = self.receive_from_java_func(generation, id, individual, self.timestamp)
             sprawl, nnpen, nepen, eepen = results
             self.nnpens.append(nnpen)
             self.nepens.append(nepen)
@@ -75,7 +76,7 @@ class HistoryEvaluationStats:
             clutterの算出方法は3種類
             正規化, 標準化, 定数でわる, の3種類の処理をかけたpenaltyをそれぞれ係数でたしあわせて算出する
         """
-        results = self.receive_from_java_func(generation, id, individual, self.gene_length)
+        results = self.receive_from_java_func(generation, id, individual, self.timestamp)
         sprawl = results[0]
         clutter = self.__calc_normalized_clutter(results)
 
@@ -181,7 +182,7 @@ class HistoryEvaluationStats:
         ]
         StatsCsvWriter.write_row(row)
 
-    def output_scatter_plot(self):
+    def output_csv(self):
         """
         過去のNN, NE, EEの全てをcsvに出力する。
         ただし、最終世代の最大値・最小値で正規化することとする

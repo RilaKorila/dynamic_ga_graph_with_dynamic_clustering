@@ -41,14 +41,14 @@ EE_RATIO = 0.5
 
 # GAの目的関数を定義
 # ここでjavaファイルを呼び出す
-def get_evaluation_results(generation, id, individual, gene_length):
+def get_evaluation_results(generation, id, individual, timestamp):
     """遺伝子の情報を与え、その遺伝子によって描画されるグラフレイアウトの評価を返す関数
 
     Args:
         generation(int): 何番目の世代か、を表現する整数
         id(int): その世代の何番目の遺伝子か、を表現する整数
         individual (float[]): 遺伝子を表現する配列
-        gene_length(int): 遺伝子の長さ
+        timestamp(int): dynamic graphのタイムスタンプ
 
     Returns:
         [sprawl, NN, NE, EE]: 与えられた遺伝子のsprawl, clutterの評価のペア
@@ -57,20 +57,13 @@ def get_evaluation_results(generation, id, individual, gene_length):
         Javaからは、sprawl, NN, NE, EEを受け取る。
         受け取った NN, NE, EE からclutterを算出する。
     """
-
-    double_array = gateway.new_array(double_class, gene_length)
-
-    for n, indi in enumerate(individual):
-        double_array[n] = float(indi)
-
-    for n, elem in enumerate(double_array):
-        res = koala_to_sprawlter.obfunc(generation, id, elem, n, gene_length)
-        # resは、[sprawl, NN, NE, EE] のfloat配列
+    # resは、[sprawl, NN, NE, EE] のfloat配列
+    java_individual = __convert_java_double_list(individual)
+    res = koala_to_sprawlter.obfunc(generation, id, java_individual, timestamp)
 
     return res
 
-
-def write_layout_file(generation, pop, gene_length):
+def write_layout_file(generation, pop, timestamp):
     """
     その世代の遺伝子情報をまとめて受け取り、それぞれに対してcsvに出力する関数を呼び出す
 
@@ -81,29 +74,40 @@ def write_layout_file(generation, pop, gene_length):
         なし
     """
     for i, ind in enumerate(pop):
-        __call_java_file_writer(generation, i, ind, gene_length)
+        __call_java_file_writer(generation, i, ind, timestamp)
 
 
-def __call_java_file_writer(generation, id, individual, gene_length):
+def __call_java_file_writer(generation, id, individual, timestamp):
     """
     与えられた遺伝子情報を初期値としてKoalaのレイアウトを作成し、レイアウト詳細をcsvに出力する
 
-     Args:
+    Args:
         generation(int): 何番目の世代か、を表現する整数
         id(int): その世代の何番目の遺伝子か、を表現する整数
         individual (float[]): 遺伝子を表現する配列
+        timestamp: dinamic graphのタイムスタンプ
 
     Returns:
         なし
     """
-    double_array = gateway.new_array(double_class, gene_length)
+    java_individual = __convert_java_double_list(individual)
+    koala_to_sprawlter.writeCsv(generation, id, java_individual, timestamp)
 
-    for n, indi in enumerate(individual):
-        double_array[n] = float(indi)
+def __convert_java_double_list(pylist: list[float]):
+    """
+    PythonのリストをJavaのリストに変換する関数
 
-    for n, elem in enumerate(double_array):
-        koala_to_sprawlter.writeCsv(generation, id, elem, n, gene_length)
+    Args:
+        pylist(list): Pythonのリスト
 
+    Returns:
+        java_list(list): Javaのリスト double[]
+    """
+    java_double_array = gateway.new_array(gateway.jvm.double, len(pylist))
+    for i, val in enumerate(pylist):
+        java_double_array[i] = val
+
+    return java_double_array
 
 ###### main関数: GAプログラムを呼び出す
 # ga = GA(myfunc, CHROMOSOME_LENGTH)
@@ -113,8 +117,6 @@ start = time.perf_counter() # 計測開始
 
 # NSGA-IIを呼び出す
 ga = NSGA2(get_evaluation_results, write_layout_file)
-
-koala_to_sprawlter.set_gene_length(ga.gene_len) 
 ga.main()
 
 end = time.perf_counter() #計測終了

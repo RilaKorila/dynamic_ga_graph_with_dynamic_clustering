@@ -35,10 +35,7 @@ public class MeshGenerator {
 	static int numvThreshold = 1;
 	public static double clustersizeRatio = 0.65; // Experiment 1-S
 
-	// private static String filename = ResourceFile.COMMUCIT_CSV.path();
-	private static String filename = ResourceFile.CIT_HEP_PH_COMMUNITY_CSV.path();
-
-	public static Mesh generate(Graph g) {
+	public static Mesh generate(Graph g, final int timestamp) {
 		Mesh m = new Mesh();
 
 		long t1 = System.currentTimeMillis();
@@ -57,7 +54,7 @@ public class MeshGenerator {
 		}
 		if (clusteringMode == CLUSTERING_IMPORT) {
 			// ファイルからクラスタリング結果を取得
-			importVerticesFromFile(m, g);
+			importVerticesFromFile(m, g, timestamp);
 		}
 
 		long t2 = System.currentTimeMillis();
@@ -93,9 +90,13 @@ public class MeshGenerator {
 	 * 
 	 * @param mesh
 	 * @param graph
+	 * @param timestamp dynamic graphのタイムスタンプ
 	 */
-	public static void importVerticesFromFile(Mesh mesh, Graph graph) {
+	public static void importVerticesFromFile(Mesh mesh, Graph graph, int timestamp) {
 		mesh.vertices.clear();
+
+		final String filename = ResourceFile.CIT_HEP_PH_COMMUNITY_DIR.path()
+				+ "runDynamicModularity_Cit-HepPh_com_" + timestamp + "_nodes.csv";
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line;
@@ -335,59 +336,6 @@ public class MeshGenerator {
 	static String path = "C:/itot/projects/FRUITSNet/Koala/lib/";
 	static String vertex_filename = "polbooks-clustering.txt";
 	static int HIERARCHY_LEVEL = 2;
-
-	static void readClusteringFile(Graph graph, Mesh mesh) {
-		BufferedReader reader;
-		int numv = 0;
-
-		try {
-
-			// first read
-			File file = new File(path + filename);
-			reader = new BufferedReader(new FileReader(file));
-			reader.ready();
-			while (true) {
-				String line = reader.readLine();
-				if (line == null)
-					break;
-				StringTokenizer token = new StringTokenizer(line);
-				for (int i = 0; i < HIERARCHY_LEVEL; i++)
-					token.nextToken();
-				int n = Integer.parseInt(token.nextToken());
-				if (n > numv)
-					numv = n;
-			}
-			reader.close();
-
-			// Allovate vertices
-			for (int i = 0; i <= numv; i++) {
-				Vertex vertex = mesh.addOneVertex();
-			}
-
-			// Second read
-			file = new File(path + filename);
-			reader = new BufferedReader(new FileReader(file));
-			reader.ready();
-			while (true) {
-				String line = reader.readLine();
-				if (line == null)
-					break;
-				StringTokenizer token = new StringTokenizer(line);
-				int nid = Integer.parseInt(token.nextToken());
-				Node node = graph.nodes.get(nid);
-				for (int i = 1; i < HIERARCHY_LEVEL; i++)
-					token.nextToken();
-				int vid = Integer.parseInt(token.nextToken());
-				Vertex vertex = mesh.getVertex(vid);
-				vertex.nodes.add(node);
-				node.setVertex(vertex);
-			}
-			reader.close();
-
-		} catch (Exception e) {
-			System.err.println(e);
-		}
-	}
 
 	static void writeEdgeFile(Graph graph) {
 		BufferedWriter writer;

@@ -7,46 +7,34 @@ import java.util.List;
 
 public class ObjectFunction {
 	static private Map<String, Map<String, Double>> cache_result = new HashMap<>();
-	private double[] _arr; // Experiment 1-S
 	private double[] _result = new double[4];
 
-	// 遺伝子の長さを設定(python側から呼び出される)
-	public void set_gene_length(int length) {
-		_arr = new double[length];
-	}
-
-	public double[] obfunc(int generation, int id, double val, int current, int finish) {
-		// store values
-		_arr[current] = val;
-
-		if (current == finish - 1) {
-			Map<String, Double> results_map = new HashMap<>();
-			// もしすでに計算済みなら計算結果を返す
-			if (cache_result.containsKey(generation + "-" + id)) {
-				results_map = cache_result.get(generation + "-" + id);
-			} else {
-				// execute KoalaToSprawlter
-				results_map = KoalaToSprawlter.execute(_arr); // Experiment 1-S
-				// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
-				cache_result.put(generation + "-" + id, results_map);
-			}
-
-			_result[0] = results_map.get("sprawl");
-			_result[1] = results_map.get("NN");
-			_result[2] = results_map.get("NE");
-			_result[3] = results_map.get("EE");
+	public double[] obfunc(final int generation, final int id, final double[] gene, final int timestamp) {
+		Map<String, Double> results_map = new HashMap<>();
+		// もしすでに計算済みなら計算結果を返す
+		if (cache_result.containsKey(generation + "-" + id)) {
+			results_map = cache_result.get(generation + "-" + id);
+		} else {
+			// execute KoalaToSprawlter
+			results_map = KoalaToSprawlter.execute(gene, timestamp); // Experiment 1-S
+			// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
+			cache_result.put(generation + "-" + id, results_map);
 		}
+
+		results_map = KoalaToSprawlter.execute(gene, timestamp); // Experiment 1-S
+		// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
+		cache_result.put(generation + "-" + id, results_map);
+
+		_result[0] = results_map.get("sprawl");
+		_result[1] = results_map.get("NN");
+		_result[2] = results_map.get("NE");
+		_result[3] = results_map.get("EE");
 
 		return _result;
 	}
 
-	public void writeCsv(int generation, int id, double val, int current, int finish) {
-		// store values
-		_arr[current] = val;
-
-		if (current == finish - 1) {
-			KoalaToSprawlterOfForcusedVertex.writeLayoutFile(_arr, generation, id);
-		}
+	public void writeCsv(final int generation, final int id, final double[] gene, final int timestamp) {
+		KoalaToSprawlter.writeLayoutFile(gene, generation, id, timestamp);
 	}
 
 	public static void main(String[] args) {

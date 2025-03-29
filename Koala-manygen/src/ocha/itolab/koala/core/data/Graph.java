@@ -22,8 +22,8 @@ public class Graph {
 	HashMap<String, Edge> edgemap;
 	public Mesh mesh = null;
 
-	public void postprocess() {
-		mesh = MeshGenerator.generate(this);
+	public void postprocess(final int timestamp) {
+		mesh = MeshGenerator.generate(this, timestamp);
 	}
 
 	public void generateEdges() {

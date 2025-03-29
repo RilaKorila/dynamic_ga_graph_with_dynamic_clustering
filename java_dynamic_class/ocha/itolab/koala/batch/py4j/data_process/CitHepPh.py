@@ -1,22 +1,27 @@
-from constants import CIT_HepPh_DIR_PATH
+from constants import CIT_HEP_PH_DIR_PATH
 from collections import defaultdict
-
+import os
 ### Cit-HepPhのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
-def get_graph_sequence_from_original_file(time_count: int):
+def get_graph_sequence_from_original_file():
     """
     ntwk/配下のファイルを読み込み、graph_sequence を返す
     
-    フォーマット:
+    ntwk/配下のファイルのフォーマットは、
     start_node_id   end_node_id
+
+    Returns:
+    - graph_sequence (dict): timestampをキーとして、ノードとエッジのリストを値とする辞書
     """
 
-    for timestamp in range(1, time_count + 1):
-        fname = f"{CIT_HepPh_DIR_PATH}ntwk/{timestamp}"
+    timestamp_count = __get_timestamp_count()
+    graph_sequence = {}
+    
+    for timestamp in range(1, timestamp_count + 1):
+        fname = f"{CIT_HEP_PH_DIR_PATH}ntwk/{timestamp}"
 
         nodes = set()
         edges = set()
-        graph_sequence = []
         
         with open(fname, "r") as f:
             lines = f.readlines()
@@ -28,7 +33,7 @@ def get_graph_sequence_from_original_file(time_count: int):
                 edges.add((start_node_id, end_node_id))
         
         # グラフを追加
-        graph_sequence.append((list(nodes), list(edges)))
+        graph_sequence[timestamp] = (list(nodes), list(edges))
     
     return graph_sequence
 
@@ -37,19 +42,32 @@ def setup_data():
     Cit-HepPhのデータを加工し、必要なファイル群を作成する。
     """
     print("=========== setup_data ===========")
-    timestamp = 1 # TODO 複数のtimestampでも対応できるようにする
 
-    edges = __get_edges(timestamp)
-    nodes = __get_nodes(timestamp)
+    timestamp_count = __get_timestamp_count()
+    
+    for timestamp in range(1, timestamp_count + 1):
+        edges = __get_edges(timestamp)
+        nodes = __get_nodes(timestamp)
 
-    # _coms_{n}_nodes.csv において、そのtimestampで生きているノードだけを抽出
-    __filter_coms(timestamp, nodes)
+        # _coms_{n}_nodes.csv では、そのtimestampでは生きていないノードIDも含んでしまっているため、
+        # ntwk/配下のデータを参照して、そのtimestampで生きているノードだけを抽出し、結果をcsvファイルとして出力
+        __write_filtered_coms(timestamp, nodes)
 
-    # Sprawlが読み込めるようにフォーマットに変換
-    __write_connectivity(nodes, edges)
+        # Sprawlが読み込めるようにフォーマットに変換
+        __write_connectivity(nodes, edges, timestamp)
+
+def __get_timestamp_count():
+    """
+    Cit-HepPhのデータのtimestampの数を返す
+    """
+    # coms/配下のファイルの数を数える
+    dir_name = f"{CIT_HEP_PH_DIR_PATH}coms/"
+    timestamp_count = len(os.listdir(dir_name))
+
+    return timestamp_count
 
 def __get_edges(timestamp):
-    fname = f"{CIT_HepPh_DIR_PATH}ntwk/{timestamp}"
+    fname = f"{CIT_HEP_PH_DIR_PATH}ntwk/{timestamp}"
 
     edges = set()
     with open(fname, "r") as f:
@@ -61,7 +79,7 @@ def __get_edges(timestamp):
     return edges
 
 def __get_nodes(timestamp):
-    fname = f"{CIT_HepPh_DIR_PATH}ntwk/{timestamp}"
+    fname = f"{CIT_HEP_PH_DIR_PATH}ntwk/{timestamp}"
 
     nodes = set()
     with open(fname, "r") as f:
@@ -74,10 +92,13 @@ def __get_nodes(timestamp):
     return nodes
 
 
-def __filter_coms(timestamp, alive_nodes):
-    # coms/配下のファイルから、存在するndoesだけを抽出
-    com_fname = f"{CIT_HepPh_DIR_PATH}coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
-    filtered_com_fname = f"{CIT_HepPh_DIR_PATH}filtered_coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
+def __write_filtered_coms(timestamp, alive_nodes):
+    """
+    _coms_{n}_nodes.csv では、そのtimestampでは生きていないノードIDも含んでしまっているため、
+    ntwk/配下のデータを参照して、そのtimestampで生きているノードだけを抽出し、結果をcsvファイルとして出力。
+    """
+    com_fname = f"{CIT_HEP_PH_DIR_PATH}coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
+    filtered_com_fname = f"{CIT_HEP_PH_DIR_PATH}filtered_coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
 
     # communityを取得
     com_nodes = {}
@@ -96,7 +117,7 @@ def __write_csv(fname, nodes):
     with open(fname, "a") as f:
         f.write(",".join(nodes))
 
-def __write_connectivity(nodes, edges):
+def __write_connectivity(nodes, edges, timestamp):
     """
     エッジの情報を Sprawlが読み込むフォーマットに変換し, csvファイルとして書き出す
 
@@ -106,7 +127,7 @@ def __write_connectivity(nodes, edges):
     outgoing_nodes
     incoming_nodes
     """
-    fname = f"{CIT_HepPh_DIR_PATH}Cit-HepPh_connectivity.csv"
+    fname = f"{CIT_HEP_PH_DIR_PATH}connectivity_timestamp_{timestamp}.csv"
     # 各ノードの外向き・内向きエッジを管理する辞書を作成
     outgoing_edges = defaultdict(list)
     incoming_edges = defaultdict(list)

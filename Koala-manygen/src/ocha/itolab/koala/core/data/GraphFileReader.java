@@ -8,7 +8,7 @@ public class GraphFileReader {
 	static BufferedReader breader = null;
 	static String directory;
 
-	public static Graph readConnectivity(String filename) {
+	public static Graph readConnectivity(final String filename, final int timestamp) {
 		graph = new Graph();
 		// System.out.println(filename);
 
@@ -16,7 +16,7 @@ public class GraphFileReader {
 		read();
 		close();
 
-		graph.postprocess();
+		graph.postprocess(timestamp);
 		return graph;
 	}
 
