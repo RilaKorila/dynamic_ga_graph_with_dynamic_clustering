@@ -2,37 +2,12 @@ import subprocess
 import time
 
 import constants
-import os
 from nsga2 import NSGA2
 from py4j.java_gateway import JavaGateway
 
 # node数 x 2　が遺伝子の長さ
 ## ObjectFunction.java の _arr配列の長さも変える
 # CHROMOSOME_LENGTH = 75 * 2  # Experiment 1-S
-
-# 現在のディレクトリを取得
-current_dir = os.getcwd()
-
-# クラスパスを指定してシェルコマンドを実行
-args = [
-    "java",
-    "-cp",
-    constants.JAR_PATH + ":" + constants.CLASS_PATH,
-    "ocha.itolab.koala.batch.py4j.ObjectFunction",
-]
-p = subprocess.Popen(args)
-
-
-# サーバー起動前に処理が下へ行くのを防ぐ
-time.sleep(3)
-
-gateway = JavaGateway(start_callback_server=True)
-
-double_class = gateway.jvm.Double
-
-# gatewayで関数を呼び出す
-koala_to_sprawlter = gateway.entry_point
-
 
 NN_RATIO = 1.0
 NE_RATIO = 1.0
@@ -115,9 +90,63 @@ def __convert_java_double_list(pylist: list[float]):
 
 start = time.perf_counter() # 計測開始
 
-# NSGA-IIを呼び出す
-ga = NSGA2(get_evaluation_results, write_layout_file)
-ga.main()
+def optimize_layouts():
+    # timestamps = [ i for i in range(1, 4)]
+    timestamps = [1, 2, 3]
+    results = []
+    previous_best_layouts = None
+    
+    # 各タイムスタンプでの最適化を実行
+    for i, timestamp in enumerate(timestamps):
+        print(f"Optimizing layout {i+1} of {len(timestamps)}...")
+        
+        ga = NSGA2(
+            obfunc=get_evaluation_results,
+            write_layout_file_func=write_layout_file,
+            timestamp=timestamp,
+            previous_best_layouts=previous_best_layouts,  # 前のタイムスタンプの良い解を渡す
+            previous_timestamp=timestamps[i-1] if i > 0 else None  # 前のタイムスタンプを渡す
+        )
+        
+        # 最適化実行
+        pop, pop_init, logbook = ga.main()
+        
+        # 結果を保存
+        results.append({
+            'timestamp': timestamp,
+            'population': pop,
+            'initial_population': pop_init,
+            'logbook': logbook
+        })
+        
+        # 次のレイアウトのベースとして使用する上位n個の解を選択
+        previous_best_layouts = select_best_layouts(pop, n=5)  # 上位5個を選択
+    
+    return results
+
+def select_best_layouts(population, n=5):
+    """パレートフロントから上位n個の良い解を選択する
+    
+    Args:
+        population: 最適化後の個体群
+        n: 選択する解の数
+    
+    Returns:
+        選択された上位n個の解のリスト
+    """
+    # パレートフロントの個体をsprawlとclutterの重み付け和でソート
+    weighted_scores = []
+    for ind in population:
+        sprawl, clutter = ind.fitness.values
+        # sprawlとclutterの重み付け和を計算（重みは調整可能）
+        weighted_score = 0.5 * sprawl + 0.5 * clutter
+        weighted_scores.append((ind, weighted_score))
+    
+    # スコアでソート
+    weighted_scores.sort(key=lambda x: x[1])
+    
+    # 上位n個の解を返す
+    return [ind for ind, _ in weighted_scores[:n]]
 
 end = time.perf_counter() #計測終了
 print('処理にかかった時間：{:.2f}秒'.format(end-start))
@@ -126,5 +155,33 @@ print('処理にかかった時間：{:.2f}秒'.format(end-start))
 # ga = NSGA3(myfunc, CHROMOSOME_LENGTH)
 # ga.main()
 
-# プロセスをkill
-gateway.shutdown()
+if __name__ == "__main__":
+
+    # クラスパスを指定してシェルコマンドを実行
+    args = [
+        "java",
+        "-cp",
+        constants.JAR_PATH + ":" + constants.CLASS_PATH,
+        "ocha.itolab.koala.batch.py4j.ObjectFunction",
+    ]
+    p = subprocess.Popen(args)
+
+
+    # サーバー起動前に処理が下へ行くのを防ぐ
+    time.sleep(3)
+
+    gateway = JavaGateway(start_callback_server=True)
+
+    # gatewayで関数を呼び出す
+    koala_to_sprawlter = gateway.entry_point
+
+    start = time.perf_counter()
+    
+    # 最適化実行
+    results = optimize_layouts()
+    
+    end = time.perf_counter()
+    print('処理にかかった時間：{:.2f}秒'.format(end-start))
+    
+    # プロセスをkill
+    gateway.shutdown()
