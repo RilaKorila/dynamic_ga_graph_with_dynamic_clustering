@@ -105,7 +105,7 @@ class NSGA2:
         # 交叉を行う関数"mate"を登録
         self.toolbox.register(
             "mate",
-            tools.cxSimulatedBinaryBounded,
+            self.crossover_only_current_layout,
             low=self.MIN_COORDINATE,
             up=self.MAX_COORDINATE,
             eta=20.0,
@@ -115,7 +115,7 @@ class NSGA2:
         # 変異を行う関数"mutate"を登録
         self.toolbox.register(
             "mutate",
-            tools.mutPolynomialBounded,
+            self.mutate_only_current_layout,
             low=self.MIN_COORDINATE,
             up=self.MAX_COORDINATE,
             eta=40.0,
@@ -514,3 +514,59 @@ class NSGA2:
     def __create_directory(self, directory_name):
         os.makedirs(directory_name, exist_ok=True)
         return directory_name
+
+    def crossover_only_current_layout(self, ind1, ind2, eta, low, up):
+        """現在のレイアウトと過去のレイアウトを分けて交叉を行う関数
+        
+        Args:
+            ind1 (list): 交叉する個体1
+            ind2 (list): 交叉する個体2
+            eta (float): 交叉の集中度 （交叉の混雑度。高いetaは親に似た交叉体を生成し、
+                低いetaはより大きく異なる解を生成する。）
+            low (list): 探索空間の下限
+            up (list): 探索空間の上限
+
+        Returns:
+            tuple: 交叉後の個体1と個体2のタプル
+        """
+        # 現在のレイアウト部分のみを交叉
+        ind1_current_layout = ind1[:self.current_layout_gene_len]
+        ind2_current_layout = ind2[:self.current_layout_gene_len]
+        ind1_current_layout, ind2_current_layout = tools.cxSimulatedBinaryBounded(ind1_current_layout, ind2_current_layout, eta, low, up)
+
+        # 過去のレイアウト部分のみを交叉
+        if self.has_previous_layout:
+            ind1_previous_layout = ind1[self.current_layout_gene_len:]
+            ind2_previous_layout = ind2[self.current_layout_gene_len:]
+
+            # 交叉後の個体を返す [現在のtimestampのレイアウト, previous_timestampのレイアウト] の順
+            ind1_current_layout = ind1_current_layout.extend(ind1_previous_layout)
+            ind2_current_layout = ind2_current_layout.extend(ind2_previous_layout)
+
+        return ind1_current_layout, ind2_current_layout
+
+    def mutate_only_current_layout(self, ind, eta, low, up, indpb):
+        """現在のレイアウトのみを突然変異させる関数
+        
+        Args:
+            ind (list): 突然変異させる個体
+            eta (float): 突然変異の集中度（突然変異の混雑度。高いetaは親に似た突然変異体を生成し、
+                低いetaはより大きく異なる解を生成する。）
+            low (list): 探索空間の下限
+            up (list): 探索空間の上限
+            indpb (float): 突然変異の確率
+
+        Returns:
+            A tuple of one individual.
+        """
+        ind_current_layout = ind[:self.current_layout_gene_len]
+        # tools.mutPolynomialBounded は tapleを返すので、[0]を取る
+        mutated_ind = tools.mutPolynomialBounded(ind_current_layout, eta, low, up, indpb)[0]
+
+        if self.has_previous_layout:
+            # previous_layoutは突然変異せずそのまま
+            ind_previous_layout = ind[self.current_layout_gene_len:]
+            mutated_ind = mutated_ind.extend(ind_previous_layout)
+
+        # mutate メソッドは tuple を返すので、このメソッドも揃える
+        return mutated_ind,
