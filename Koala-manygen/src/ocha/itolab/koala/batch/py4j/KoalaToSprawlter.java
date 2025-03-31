@@ -90,7 +90,7 @@ public class KoalaToSprawlter {
 
 	static void writeLayoutFile(double init[], int generation, int id, int timestamp) {
 		final String dirName = createDirectory(ResourceFile.RESULT.path() + "/" + timestamp + "/");
-		final String filename = dirName + "/layout" + generation + "-" + id + ".csv";
+		final String filename = dirName + "layout" + generation + "-" + id + ".csv";
 
 		// Cit-HepPhのデータを読み込む
 		final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
