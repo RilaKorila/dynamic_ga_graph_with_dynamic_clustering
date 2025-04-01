@@ -4,6 +4,7 @@ import time
 import constants
 from nsga2 import NSGA2
 from py4j.java_gateway import JavaGateway
+from dynamic_graph import DynamicGraph
 
 # node数 x 2　が遺伝子の長さ
 ## ObjectFunction.java の _arr配列の長さも変える
@@ -99,10 +100,13 @@ def optimize_layouts():
     # 各タイムスタンプでの最適化を実行
     for i, timestamp in enumerate(timestamps):
         print(f"Optimizing layout {i+1} of {len(timestamps)}...")
+
+        dynamic_graph = DynamicGraph(timestamps)
         
         ga = NSGA2(
             obfunc=get_evaluation_results,
             write_layout_file_func=write_layout_file,
+            dynamic_graph=dynamic_graph,
             timestamp=timestamp,
             previous_best_layouts=previous_best_layouts,  # 前のタイムスタンプの良い解を渡す
             previous_timestamp=timestamps[i-1] if i > 0 else None  # 前のタイムスタンプを渡す

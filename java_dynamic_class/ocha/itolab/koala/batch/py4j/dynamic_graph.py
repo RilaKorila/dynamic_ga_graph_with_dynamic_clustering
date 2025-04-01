@@ -1,11 +1,23 @@
 from data_process.CitHepPh import get_graph_sequence_from_original_file, setup_data
+from community_detect import get_community_detection_result
+from community_tracking import track_communities
+
 import networkx as nx
 
 #### DynamicGraphクラス ####
 class DynamicGraph:
-    def __init__(self):
+    def __init__(self, timestamps):
         ## データを取得 （使用するデータを変えるときはここを変更する）
         self.graph_sequence = get_graph_sequence_from_original_file()
+
+        # timestampとcommunityの紐付け
+        self.communities_dict = {timestamp : get_community_detection_result(timestamp) 
+                            for timestamp in timestamps}
+        # timestampとsummarized_graphの紐付け
+        self.summarized_graphs = {timestamp : self.create_summarized_graph(community, timestamp) 
+                                  for timestamp, community in self.communities_dict.items()}
+
+        # 使用するデータに依存した setup_data メソッドを呼び出す
         setup_data()
 
     def create_summarized_graph(self, communities, timestamp):
@@ -55,4 +67,12 @@ class DynamicGraph:
                             summarized_graph.add_edge(community_id_of_source, community_id_of_target, weight=1)
 
         return summarized_graph
-        
+    
+    def get_dynamic_communities(self):
+        return track_communities(self.communities, theta=0.2)
+
+    def get_summarized_graph(self, timestamp):
+        return self.summarized_graphs[timestamp]
+
+    def get_communities(self, timestamp):
+        return self.communities_dict[timestamp]

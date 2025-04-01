@@ -3,38 +3,38 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 ############ GAから呼び出される関数 ############
-def define_layout(sammarized_graph):
-    pos = spring_layout(sammarized_graph) # 初期のレイアウト
+def define_layout(summarized_graph):
+    pos = spring_layout(summarized_graph) # 初期のレイアウト
     positive_pos = __parallel_move_layout(pos)
     return positive_pos
 ###########################################
 
 
-## 検証用 sammarized_graphの描画
-def visualize_sammarized_graph(sammarized_graph, pos, file_name):
+## 検証用 summarized_graphの描画
+def visualize_summarized_graph(summarized_graph, pos, file_name):
     """
     Visualizes the supergraph with Louvain community detection results.
     (ただし、同一metanode内のedgeは描画しない)
 
     Parameters:
-    - sammarized_graph: Weighted NetworkX graph (ノードサイズは metanodesのサイズに比例, エッジの太さもmetaedgeのサイズに比例)
-    - pos: sammarized_graphにlayout関数を適用した結果(実施するたびに結果が変わってしまうので、引数として渡す)
+    - summarized_graph: Weighted NetworkX graph (ノードサイズは metanodesのサイズに比例, エッジの太さもmetaedgeのサイズに比例)
+    - pos: summarized_graphにlayout関数を適用した結果(実施するたびに結果が変わってしまうので、引数として渡す)
     """
     plt.figure(figsize=(8, 6))
 
     # ノードサイズを取得
-    node_sizes = [sammarized_graph.nodes[node]['size'] for node in sammarized_graph.nodes()]
+    node_sizes = [summarized_graph.nodes[node]['size'] for node in summarized_graph.nodes()]
     scaled_node_sizes = __scale_size(node_sizes, 200, 800)
 
     # エッジの太さを取得
-    edges_to_remove = [(u,v) for u, v in sammarized_graph.edges() if u == v] # 同一metanode内のedgeは除く
-    sammarized_graph.remove_edges_from(edges_to_remove)
-    edge_weights = [sammarized_graph[u][v]['weight'] for u, v in sammarized_graph.edges()]
+    edges_to_remove = [(u,v) for u, v in summarized_graph.edges() if u == v] # 同一metanode内のedgeは除く
+    summarized_graph.remove_edges_from(edges_to_remove)
+    edge_weights = [summarized_graph[u][v]['weight'] for u, v in summarized_graph.edges()]
     scaled_edge_weights = __scale_size(edge_weights, 5, 20)
 
     # グラフの描画
     nx.draw(
-        sammarized_graph,
+        summarized_graph,
         pos,
         with_labels=False, 
         edge_color="gray",
@@ -80,7 +80,7 @@ def __parallel_move_layout(pos):
     
     return moved_pos
 
-def get_sammarized_graph(G_super, communities):
+def get_summarized_graph(G_super, communities):
     """
     Creates a summarized graph from the supergraph and communities.
 

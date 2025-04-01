@@ -8,12 +8,10 @@ from deap import base, creator, tools
 from deap.benchmarks.tools import hypervolume
 from history_evaluation_stats import HistoryEvaluationStats
 from my_mutation import muSmall
-from layouts import define_layout, visualize_sammarized_graph
-from dynamic_graph import DynamicGraph
-from community_detect import get_community_detection_result
+from layouts import define_layout, visualize_summarized_graph
 
 class NSGA2:
-    def __init__(self, obfunc, write_layout_file_func, timestamp, previous_best_layouts=None, previous_timestamp=None):
+    def __init__(self, obfunc, write_layout_file_func, dynamic_graph, timestamp, previous_best_layouts=None, previous_timestamp=None):
         self.timestamp = timestamp
         self.previous_timestamp = previous_timestamp
         self.previous_best_layouts = previous_best_layouts
@@ -24,9 +22,6 @@ class NSGA2:
         self.MIN_COORDINATE, self.MAX_COORDINATE = -10.0, 10.0
         # 1つの個体内の遺伝子の数を指定 (4の倍数でないとselTournamentDCDでエラー)
         self.NDIM = 20  # Experiment 1-S
-
-        # supergraphを作成する (community detectionも含む)
-        dynamic_graph = DynamicGraph() # TODO timestamp渡した方が良い気がする
 
         self.layout_counter = 0
 
@@ -85,11 +80,8 @@ class NSGA2:
         self.hv_fname = "hypervolumn_plot.txt"
 
         # 現在のタイムスタンプのグラフとコミュニティのみを生成 
-        self.communities = get_community_detection_result(self.timestamp)
-        self.sammarized_graph = dynamic_graph.create_summarized_graph(
-            self.communities, 
-            self.timestamp
-        )
+        self.communities = dynamic_graph.get_communities(timestamp)
+        self.summarized_graph = dynamic_graph.get_summarized_graph(timestamp)
 
         # 遺伝子長の計算
         self.current_layout_gene_len = len(self.communities) * 2  # 現在のレイアウトの遺伝子長
@@ -151,11 +143,11 @@ class NSGA2:
         前のタイムスタンプの良い解が存在する場合は、一定の確率でそれらを使用し、それ以外は新規に生成する。
         """
         # 現在のタイムスタンプのレイアウトを生成
-        pos = define_layout(self.sammarized_graph)
+        pos = define_layout(self.summarized_graph)
         
         ## 検証用 ##
         dir_name = self.__create_directory(SUPERGRAPH_PNG_PATH + f"{self.timestamp}/")
-        visualize_sammarized_graph(self.sammarized_graph, pos, 
+        visualize_summarized_graph(self.summarized_graph, pos, 
                                  f"{dir_name}initial_layout{self.layout_counter}.png")
         self.layout_counter += 1
         ###########
