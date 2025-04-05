@@ -17,14 +17,17 @@ EE_RATIO = 0.5
 
 # GAの目的関数を定義
 # ここでjavaファイルを呼び出す
-def get_evaluation_results(generation, id, individual, timestamp):
+def get_evaluation_results(generation, id, previous_plist, current_plist, timestamp, previous_dynamic_communities, dynamic_communities):
     """遺伝子の情報を与え、その遺伝子によって描画されるグラフレイアウトの評価を返す関数
 
     Args:
         generation(int): 何番目の世代か、を表現する整数
         id(int): その世代の何番目の遺伝子か、を表現する整数
-        individual (float[]): 遺伝子を表現する配列
+        previous_plist (float[]): 前の世代の遺伝子
+        current_plist (float[]): 遺伝子を表現する配列
         timestamp(int): dynamic graphのタイムスタンプ
+        dynamic_communities(list[set[int]]): 動的コミュニティのリスト
+        previous_dynamic_communities([list[set[int]]): 前のタイムスタンプの動的コミュニティのリスト
 
     Returns:
         [sprawl, NN, NE, EE]: 与えられた遺伝子のsprawl, clutterの評価のペア
@@ -33,9 +36,14 @@ def get_evaluation_results(generation, id, individual, timestamp):
         Javaからは、sprawl, NN, NE, EEを受け取る。
         受け取った NN, NE, EE からclutterを算出する。
     """
+    java_previous_dynamic_communities = __convert_time_ordered_dynamic_communities(previous_dynamic_communities)
+    java_dynamic_communities = __convert_time_ordered_dynamic_communities(dynamic_communities)
+    
     # resは、[sprawl, NN, NE, EE] のfloat配列
-    java_individual = __convert_java_double_list(individual)
-    res = koala_to_sprawlter.obfunc(generation, id, java_individual, timestamp)
+    java_previous_plist = __convert_java_double_list(previous_plist)
+    java_current_plist = __convert_java_double_list(current_plist)
+    res = koala_to_sprawlter.obfunc(generation, id, java_previous_plist, java_current_plist, timestamp, 
+                                    java_previous_dynamic_communities, java_dynamic_communities)
 
     return res
 
@@ -69,7 +77,7 @@ def __call_java_file_writer(generation, id, individual, timestamp):
     java_individual = __convert_java_double_list(individual)
     koala_to_sprawlter.writeCsv(generation, id, java_individual, timestamp)
 
-def __convert_java_double_list(pylist: list[float]):
+def __convert_java_double_list(pylist: list[float] | None):
     """
     PythonのリストをJavaのリストに変換する関数
 
@@ -79,11 +87,37 @@ def __convert_java_double_list(pylist: list[float]):
     Returns:
         java_list(list): Javaのリスト double[]
     """
+    if pylist is None:
+        return None
+
     java_double_array = gateway.new_array(gateway.jvm.double, len(pylist))
     for i, val in enumerate(pylist):
         java_double_array[i] = val
 
     return java_double_array
+
+def __convert_time_ordered_dynamic_communities(communities: list[set[int]] | None):
+    """
+    PythonのリストをJavaのリストに変換する関数
+
+    Args:
+        communities (list[set[int]]): Pythonのリスト（各要素はノードIDの集合）
+
+    Returns:
+        java_list (Java List<List<Integer>>): Javaのリスト（各集合がソートされたリストに）
+    """
+    if communities is None:
+        return None
+
+    java_list = gateway.jvm.java.util.ArrayList()
+
+    for py_set in communities:
+        java_inner_list = gateway.jvm.java.util.ArrayList()
+        for val in sorted(py_set):  # 昇順に並べ替える
+            java_inner_list.add(int(val))  # JavaのList<Integer>にするためにstrに変換
+        java_list.add(java_inner_list)
+
+    return java_list
 
 ###### main関数: GAプログラムを呼び出す
 # ga = GA(myfunc, CHROMOSOME_LENGTH)

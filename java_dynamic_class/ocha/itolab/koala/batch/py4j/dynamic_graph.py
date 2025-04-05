@@ -1,24 +1,32 @@
 from data_process.CitHepPh import get_graph_sequence_from_original_file, setup_data
 from community_detect import get_community_detection_result
 from community_tracking import track_communities
+from constants import CIT_HEP_PH_DIR_PATH
 
 import networkx as nx
 
 #### DynamicGraphクラス ####
 class DynamicGraph:
     def __init__(self, timestamps):
+        # 使用するデータに依存した setup_data メソッドを呼び出す
+        setup_data()
+
         ## データを取得 （使用するデータを変えるときはここを変更する）
-        self.graph_sequence = get_graph_sequence_from_original_file()
+        self.graph_sequence_dict = get_graph_sequence_from_original_file(timestamps)
+        self.timestamps = timestamps
 
         # timestampとcommunityの紐付け
         self.communities_dict = {timestamp : get_community_detection_result(timestamp) 
-                            for timestamp in timestamps}
+                            for timestamp in self.timestamps}
         # timestampとsummarized_graphの紐付け
         self.summarized_graphs = {timestamp : self.create_summarized_graph(community, timestamp) 
                                   for timestamp, community in self.communities_dict.items()}
-
-        # 使用するデータに依存した setup_data メソッドを呼び出す
-        setup_data()
+        
+        # 動的コミュニティの追跡結果を保存
+        self.time_ordered_dynamic_communities_dict = self.get_time_ordered_dynamic_communities_dict()
+        
+        
+        # self.write_dynamic_communities_to_file(CIT_HEP_PH_DIR_PATH + "dynamic_communities/", self.time_ordered_dynamic_communities_dict)
 
     def create_summarized_graph(self, communities, timestamp):
         """
@@ -40,7 +48,7 @@ class DynamicGraph:
         summarized_graph = nx.Graph()
 
         # 特定のtimestampにおけるgraphのノードとエッジを取得
-        nodes, edges = self.graph_sequence[timestamp]
+        nodes, edges = self.graph_sequence_dict[timestamp]
 
         # metanodeの作成
         for community_id, community in enumerate(communities):
@@ -68,11 +76,109 @@ class DynamicGraph:
 
         return summarized_graph
     
-    def get_dynamic_communities(self):
-        return track_communities(self.communities, theta=0.2)
+    def get_time_ordered_dynamic_communities_dict(self):
+        """
+        Returns:
+            dict[int, list[set[int]]]: timestampごとの動的コミュニティをリストを作成し、timestampをkey, 集約結果をvalueとしたdict
+        """
+        communities = list(self.communities_dict.values())
+        # theta値は調整可能。値が大きいほど厳密なマッチングになる
+        all_dynamic_communities = track_communities(communities, theta=0.2)
+
+
+        time_ordered_dynamic_communities_dict = {}
+
+        # 各タイムスタンプに対して動的コミュニティを整理
+        for t, timestamp in enumerate(self.timestamps):
+            dynamic_communities = []
+            # 各動的コミュニティについて処理
+            for dynamic_community_id,dynamic_community in enumerate(all_dynamic_communities):
+                # そのタイムスタンプでのコミュニティを探す
+                for time_idx, nodes in dynamic_community:
+                    if timestamp == self.timestamps[time_idx]:  # インデックスで比較
+                        dynamic_communities.append(nodes)
+                        break
+                # コミュニティが見つからない場合は空のセットを追加
+                dynamic_communities.append(set())
+            
+            time_ordered_dynamic_communities_dict[timestamp] = dynamic_communities
+
+        return time_ordered_dynamic_communities_dict
+    
+    def get_dynamic_community_by_timestamp(self, all_dynamic_communities, target_timestamp):
+        """
+        timestampに対応する動的コミュニティを取得する
+
+        Args:
+        - target_timestamp (int): 取得する動的コミュニティのtimestamp
+
+        Returns:
+        - dynamic_community (list(set[int])): 動的コミュニティのノードの集合。要素の0番目は、dynamic_community_id=0のコミュニティに属するノード群。
+        """
+        dynamic_community_ordered_by_dynamic_community_id = []
+        for dynamic_community_id, dynamic_community in enumerate(all_dynamic_communities):
+            for time_idx, nodes in dynamic_community:
+                if self.timestamps[time_idx] == target_timestamp:
+                    dynamic_community_ordered_by_dynamic_community_id.append(nodes)
+                else:
+                    # 該当する動的コミュニティが存在しない場合は空のリストを追加
+                    dynamic_community_ordered_by_dynamic_community_id.append(set())
+
+        return dynamic_community_ordered_by_dynamic_community_id
 
     def get_summarized_graph(self, timestamp):
         return self.summarized_graphs[timestamp]
 
     def get_communities(self, timestamp):
         return self.communities_dict[timestamp]
+
+    def write_dynamic_communities_to_file(self, file_path, time_ordered_dynamic_communities_dict):
+        # 各タイムスタンプごとに動的コミュニティファイルを作成
+        for timestamp in self.timestamps:
+            fname = file_path + "dynamic_community_" + str(timestamp) + ".txt"
+            with open(fname, "w") as f:
+                dynamic_communities = time_ordered_dynamic_communities_dict[timestamp]
+                for id, dynamic_community in enumerate(dynamic_communities):
+                    f.write(str(id) + ":\n")
+                    if len(dynamic_community) == 0:
+                        f.write("\n")
+                    else:
+                        # dynamic_community を並び替えて、,でjoinして出力
+                        f.write(",".join(str(node) for node in sorted(dynamic_community)) + "\n")
+
+        self._check_assigned_dynamic_community_id()
+    
+    def _check_assigned_dynamic_community_id(self):
+        """
+        coms/配下のファイルに含まれるノードIDと、timestamoごとに分割したdynamic_communityに含まれるノードIDが各timestampで一致していることを確認する
+        """
+        for timestamp in self.timestamps:
+            # coms/配下のファイルと、dynamic_community_1.txt の内容を比較する
+            coms_file_path = CIT_HEP_PH_DIR_PATH + "coms/runDynamicModularity_Cit-HepPh_com_" + str(timestamp) + "_nodes.csv"
+
+            nodes_list= list()
+            with open(coms_file_path, "r") as f:
+                coms_file_content = f.read()
+                for line in coms_file_content.split("\n"):
+                    if line.strip() == "":
+                        continue
+                    nodes = line.split(",")
+                    sorted_nodes = sorted(nodes)
+                    nodes_list.append(sorted_nodes)
+
+            dc_nodes_list = list()
+            with open(CIT_HEP_PH_DIR_PATH + "dynamic_communities/dynamic_community_" + str(timestamp) + ".txt", "r") as f:
+                dynamic_community_file_content = f.read()
+                for line in dynamic_community_file_content.split("\n"):
+                    if line.strip() == "":
+                        continue
+                    if line[-1] == ":":
+                        continue
+                    nodes = line.split(",")
+                    sorted_dc_nodes = sorted(nodes)
+                    dc_nodes_list.append(sorted_dc_nodes)
+
+            for nodes in dc_nodes_list:
+                if nodes not in nodes_list:
+                    print("WARNING: dynamic_community_" + str(timestamp) + ".txt に存在しないノードが含まれています。")
+                    print(nodes)

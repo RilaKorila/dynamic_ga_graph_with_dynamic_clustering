@@ -30,12 +30,16 @@ class StatsCsvWriter(CsvWriter):
                     "NEmin",
                     "EEmax",
                     "EEmin",
+                    "time_smoothness_max",
+                    "time_smoothness_min",
                     "NNave",
                     "NNstd",
                     "NEave",
                     "NEstd",
                     "EEave",
                     "EEstd",
+                    "time_smoothness_ave",
+                    "time_smoothness_std",
                 ]
             )
 
@@ -54,7 +58,7 @@ class PenaltyCsvWriter(CsvWriter):
         with open(cls.fname, "a") as f:
             writer = csv.writer(f)
             writer.writerow(
-                ["gen", "nnpen", "nepen", "eepen", "normalized_clutter", "sprawl"]
+                ["gen", "nnpen", "nepen", "eepen", "normalized_clutter", "sprawl", "time_smoothness"]
             )
 
     @classmethod
@@ -76,7 +80,7 @@ class ClutterSprawlCsvWriter(CsvWriter):
     def write_header(cls):
         with open(cls.fname, "a") as f:
             writer = csv.writer(f)
-            writer.writerow(["gen", "normalized_clutter", "sprawl"])
+            writer.writerow(["gen", "normalized_clutter", "sprawl", "time_smoothness"])
 
     @classmethod
     def write_row(cls, row):

@@ -2,6 +2,7 @@ package ocha.itolab.koala.batch.py4j;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import ocha.itolab.koala.constants.ResourceFile;
 import ocha.itolab.koala.core.data.*;
 import ocha.itolab.koala.core.forcedirected.LinLogLayout;
@@ -26,22 +27,7 @@ public class KoalaToSprawlter {
 	public static Map<String, Double> execute(final double init[], final int timestamp) {
 		System.out.println("Forcus条件適用なし");
 
-		// Cit-HepPhのデータを読み込む
-		final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
-
-		// double List から LinLogLayoutクラスのinitialPosに変換
-		generateInitPositionList(init);
-
-		// ---------- initial positionに基づいてグラフを生成 ----------
-		graph = GraphFileReader.readConnectivity(infile, timestamp);
-		graph.generateEdges();
-		for (int i = 0; i < SMOOTHING_ITERATION; i++) {
-			// ドロネー三角法を適用
-			MeshTriangulator.triangulate(graph.mesh);
-			// ラプラシアンスムーザーを適用
-			MeshSmoother.smooth(graph.mesh, graph.maxDegree, 0.05);
-		}
-		graph.mesh.finalizePosition();
+		graph = getGraph(init, timestamp);
 
 		// writeLayoutFile(graph);
 
@@ -76,22 +62,7 @@ public class KoalaToSprawlter {
 		return results;
 	}
 
-	static void generateInitPositionList(double init[]) {
-		ArrayList<double[]> poslist = new ArrayList<double[]>();
-		for (int i = 0; i < init.length; i += 2) {
-			double pos[] = new double[3];
-			pos[0] = init[i] * 0.1;
-			pos[1] = init[i + 1] * 0.1;
-			pos[2] = 0.0;
-			poslist.add(pos);
-		}
-		LinLogLayout.setInitialPositionList(poslist);
-	}
-
-	static void writeLayoutFile(double init[], int generation, int id, int timestamp) {
-		final String dirName = createDirectory(ResourceFile.RESULT.path() + "/" + timestamp + "/");
-		final String filename = dirName + "layout" + generation + "-" + id + ".csv";
-
+	public static Graph getGraph(final double init[], final int timestamp) {
 		// Cit-HepPhのデータを読み込む
 		final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
 
@@ -108,6 +79,27 @@ public class KoalaToSprawlter {
 			MeshSmoother.smooth(graph.mesh, graph.maxDegree, 0.05);
 		}
 		graph.mesh.finalizePosition();
+
+		return graph;
+	}
+
+	static void generateInitPositionList(double init[]) {
+		ArrayList<double[]> poslist = new ArrayList<double[]>();
+		for (int i = 0; i < init.length; i += 2) {
+			double pos[] = new double[3];
+			pos[0] = init[i] * 0.1;
+			pos[1] = init[i + 1] * 0.1;
+			pos[2] = 0.0;
+			poslist.add(pos);
+		}
+		LinLogLayout.setInitialPositionList(poslist);
+	}
+
+	static void writeLayoutFile(double init[], int generation, int id, int timestamp) {
+		final String dirName = createDirectory(ResourceFile.RESULT.path() + "/" + timestamp + "/");
+		final String filename = dirName + "layout" + generation + "-" + id + ".csv";
+
+		graph = getGraph(init, timestamp);
 
 		try {
 			LayoutFileWriter.write(graph, filename);

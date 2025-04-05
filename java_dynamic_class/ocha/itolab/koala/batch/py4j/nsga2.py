@@ -82,6 +82,7 @@ class NSGA2:
         # 現在のタイムスタンプのグラフとコミュニティのみを生成 
         self.communities = dynamic_graph.get_communities(timestamp)
         self.summarized_graph = dynamic_graph.get_summarized_graph(timestamp)
+        self.dynamic_graph = dynamic_graph
 
         # 遺伝子長の計算
         self.current_layout_gene_len = len(self.communities) * 2  # 現在のレイアウトの遺伝子長
@@ -126,13 +127,9 @@ class NSGA2:
 
 
         # 評価関数"evaluate"を登録
-        self.history_evaluation_stats = HistoryEvaluationStats(self.obfunc, self.timestamp)
+        self.history_evaluation_stats = HistoryEvaluationStats(self.obfunc, self.previous_timestamp, self.timestamp, self.dynamic_graph,
+                                                               self.has_previous_layout, self.current_layout_gene_len)
         self.toolbox.register("evaluate", self.history_evaluation_stats.evaluate_fitness)
-
-        if self.has_previous_layout:
-            self.previous_history_evaluation_stats = HistoryEvaluationStats(self.obfunc, self.previous_timestamp)
-            self.toolbox.register("evaluate_previous_layout", self.previous_history_evaluation_stats.evaluate_fitness)
-
 
     def create_individual(self):
         """個体を生成する
@@ -323,35 +320,18 @@ class NSGA2:
         """
         self.history_evaluation_stats.add_individuals(invalid_ind, gen)
         self.history_evaluation_stats.write_csv()
-        if self.has_previous_layout:
-            self.previous_history_evaluation_stats.add_individuals(invalid_ind, gen)
-            self.previous_history_evaluation_stats.write_csv()
 
         # 既存の評価関数を2つのレイアウトで個別に評価
         for ind in invalid_ind:
             # 現在のレイアウトの評価
-            current_layout_plist = ind[:self.current_layout_gene_len]
             current_fitness = self.toolbox.evaluate(
-                current_layout_plist,
                 gen,
-                gen
+                gen,
+                ind
             )
-
-            # 前のレイアウトがある場合は評価
-            if self.has_previous_layout:
-                previous_layout_plist = ind[self.current_layout_gene_len:]
-                previous_fitness = self.toolbox.evaluate_previous_layout(
-                    previous_layout_plist,
-                    gen,
-                    gen
-                )
-                # 2つのレイアウトの評価値の平均を取る
-                sprawl = (current_fitness[0] + previous_fitness[0]) / 2
-                clutter = (current_fitness[1] + previous_fitness[1]) / 2
-            else:
-                # 前のレイアウトがない場合は現在のレイアウトの評価のみ
-                sprawl = current_fitness[0]
-                clutter = current_fitness[1]
+            # 前のレイアウトがない場合は現在のレイアウトの評価のみ
+            sprawl = current_fitness[0]
+            clutter = current_fitness[1]
             
             ind.fitness.values = (sprawl, clutter)
 
@@ -467,14 +447,6 @@ class NSGA2:
         # 散布図描画
         self.__viz_scatter_plot(self.history_evaluation_stats.get_initial_pops(),
                                  self.history_evaluation_stats.get_final_pops())
-
-        ## 2つ目のレイアウト
-        if self.has_previous_layout:
-            # csv 出力
-            self.previous_history_evaluation_stats.output_csv()
-            # 散布図描画
-            self.__viz_scatter_plot(self.previous_history_evaluation_stats.get_initial_pops(),
-                                    self.previous_history_evaluation_stats.get_final_pops())
 
 
     def __viz_scatter_plot(self, initial_pops, final_pops):

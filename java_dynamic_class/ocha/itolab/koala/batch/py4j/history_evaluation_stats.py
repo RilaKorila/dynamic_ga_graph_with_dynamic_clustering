@@ -9,7 +9,7 @@ EE_RATIO = 0.5
 
 
 class HistoryEvaluationStats:
-    def __init__(self, receive_from_java_func, timestamp):
+    def __init__(self, receive_from_java_func, previous_timestamp, timestamp, dynamic_graph, has_previous_layout, current_layout_gene_len):
         print("過去の全ての世代を基準に評価値をスケール")
         ClutterSprawlCsvWriter.set_timestamp(timestamp)  # タイムスタンプを設定
         self.csv_fname = PNG_PATH + f"{timestamp}/" +   "evaluation_stats.csv"
@@ -17,26 +17,46 @@ class HistoryEvaluationStats:
         self.nnpens = []
         self.nepens = []
         self.eepens = []
+        self.time_smoothnesses = []
         self.receive_from_java_func = receive_from_java_func
         self.timestamp = timestamp
+        self.previous_timestamp = previous_timestamp
+        self.dynamic_graph = dynamic_graph
+        self.has_previous_layout = has_previous_layout
+        self.current_layout_gene_len = current_layout_gene_len
         self.__set_column_to_csv()
 
-    def add_individuals(self, new_individuals, generation):
-        self.__calc_penalties(generation, new_individuals)
+    def add_individuals(self, individuals, generation):
+        self.__calc_penalties(generation, individuals)
         self.__calc_stats()
         self.print_stats()
 
     def __calc_penalties(self, generation, individuals):
         """
-        NN, NE, EEの算出をし、それぞれのリストに計算結果を保存する。ここでは正規化はされない。
+        NN, NE, EEの, time_smoothnessの算出をし、それぞれのリストに計算結果を保存する。ここでは正規化はされない。
         """
+        dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
+
+        # 1つ目のtimestampの場合は、previous_dynamic_community は None
+        if self.has_previous_layout:
+            previous_dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.previous_timestamp)
+        else:
+            previous_dynamic_community = None
+
         for id, individual in enumerate(individuals):
-            results = self.receive_from_java_func(generation, id, individual, self.timestamp)
-            sprawl, nnpen, nepen, eepen = results
+            current_layout_plist = individual[:self.current_layout_gene_len]
+            if self.has_previous_layout:
+                previous_layout_plist = individual[self.current_layout_gene_len:]
+            else:
+                previous_layout_plist = None
+            results = self.receive_from_java_func(generation, id, previous_layout_plist, current_layout_plist, self.timestamp, 
+                                                  previous_dynamic_community, dynamic_community)
+            sprawl, nnpen, nepen, eepen, time_smoothness = results
             self.nnpens.append(nnpen)
             self.nepens.append(nepen)
             self.eepens.append(eepen)
             self.sprawls.append(sprawl)
+            self.time_smoothnesses.append(time_smoothness)
 
     def __calc_stats(self):
         """
@@ -48,12 +68,16 @@ class HistoryEvaluationStats:
         self.NEmin = min(self.nepens)
         self.EEmax = max(self.eepens)
         self.EEmin = min(self.eepens)
+        self.time_smoothness_max = max(self.time_smoothnesses)
+        self.time_smoothness_min = min(self.time_smoothnesses)
         self.NNave = self.__ave(self.nnpens)
         self.NNstd = self.__std(self.nnpens)
         self.NEave = self.__ave(self.nepens)
         self.NEstd = self.__std(self.nepens)
         self.EEave = self.__ave(self.eepens)
         self.EEstd = self.__std(self.eepens)
+        self.time_smoothness_ave = self.__ave(self.time_smoothnesses)
+        self.time_smoothness_std = self.__std(self.time_smoothnesses)
 
     def __ave(self, arr):
         return sum(arr) / len(arr)
@@ -63,11 +87,13 @@ class HistoryEvaluationStats:
         squared_deviations = sum((x - mean) ** 2 for x in arr)
         return math.sqrt(squared_deviations / len(arr))
 
-    def evaluate_fitness(self, individual, generation, id):
+    def evaluate_fitness(self, generation, id, individual):
         """GAの目的関数。1つの遺伝子を受け取り、その評価値を返す。返り値はiteratorでないといけないので、pairで返す
 
         Args:
-            individual (float[]): 遺伝子を表現する配列
+            generation (int): 世代番号
+            id (int): 個体番号
+            individual (float[]): 遺伝子を表現する配列([current_layout, previous_layout]の順で並んでいる)
 
         Returns:
             Pair(float, float): 与えられた遺伝子のsprawl, clutterの評価のペア
@@ -76,22 +102,31 @@ class HistoryEvaluationStats:
             clutterの算出方法は3種類
             正規化, 標準化, 定数でわる, の3種類の処理をかけたpenaltyをそれぞれ係数でたしあわせて算出する
         """
-        results = self.receive_from_java_func(generation, id, individual, self.timestamp)
+        previous_dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.previous_timestamp)
+        dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
+
+        current_layout_plist = individual[:self.current_layout_gene_len]
+        if self.has_previous_layout:
+            previous_layout_plist = individual[self.current_layout_gene_len:]
+        else:
+            previous_layout_plist = None
+
+        results = self.receive_from_java_func(generation, id, previous_layout_plist, current_layout_plist, self.timestamp, previous_dynamic_community, dynamic_community)
         sprawl = results[0]
-        clutter = self.__calc_normalized_clutter(results)
+        clutter = self.__calc_normalized_clutter(results[1], results[2], results[3])
+        time_smoothness = results[4]
 
         # 実験用
-        row = [generation, results[1], results[2], results[3], clutter, sprawl]
+        row = [generation, results[1], results[2], results[3], clutter, sprawl, time_smoothness]
         PenaltyCsvWriter.write_row(row)
 
         return (sprawl, clutter)
 
-    def __calc_normalized_clutter(self, results):
+    def __calc_normalized_clutter(self, nnpen, nepen, eepen):
         """
         Javaから受け取ったNN, NE, EEの各ペナルティ値を正規化した上で、Clutter値を算出する。
         正規化には、これまで登場した全てのindividualの集団の中での最大値・最小値を使う。
         """
-        _, nnpen, nepen, eepen = results
 
         normalized_nnpen = (
             (nnpen - self.NNmin) / (self.NNmax - self.NNmin)
@@ -117,7 +152,7 @@ class HistoryEvaluationStats:
         return clutter
 
     def __calc_standardized_clutter(self, results):
-        _, nnpen, nepen, eepen = results
+        _, nnpen, nepen, eepen, _  = results
 
         standardized_nnpen = (
             (nnpen - self.NNave) / self.NNstd if self.NNstd != 0.0 else 0.0
@@ -137,7 +172,7 @@ class HistoryEvaluationStats:
         return clutter
 
     def __calc_scaled_clutter(self, results):
-        _, nnpen, nepen, eepen = results
+        _, nnpen, nepen, eepen, _ = results
         NN_MAX = 0.3
         NE_MAX = 2400.0
         EE_MAX = 60000.0
@@ -159,6 +194,7 @@ class HistoryEvaluationStats:
         print("NNmax", self.NNmax, "NNmax", self.NNmin)
         print("NEmax", self.NEmax, "NEmin", self.NEmin)
         print("EEmax", self.EEmax, "EEmin", self.EEmin)
+        print("time_smoothness_max", self.time_smoothness_max, "time_smoothness_min", self.time_smoothness_min)
 
     def __set_column_to_csv(self):
         StatsCsvWriter.write_header()
@@ -173,12 +209,16 @@ class HistoryEvaluationStats:
             self.NEmin,
             self.EEmax,
             self.EEmin,
+            self.time_smoothness_max,
+            self.time_smoothness_min,
             self.NNave,
             self.NNstd,
             self.NEave,
             self.NEstd,
             self.EEave,
             self.EEstd,
+            self.time_smoothness_ave,
+            self.time_smoothness_std,
         ]
         StatsCsvWriter.write_row(row)
 
@@ -196,9 +236,10 @@ class HistoryEvaluationStats:
                 nepen = self.nepens[gen * self.population_length + i]
                 eepen = self.eepens[gen * self.population_length + i]
                 sprawl = self.sprawls[gen * self.population_length + i]
-                clutter = self.__calc_normalized_clutter([sprawl, nnpen, nepen, eepen])
+                time_smoothness = self.time_smoothnesses[gen * self.population_length + i]
+                clutter = self.__calc_normalized_clutter(nnpen, nepen, eepen)
 
-                ClutterSprawlCsvWriter.write_row([gen, clutter, sprawl])
+                ClutterSprawlCsvWriter.write_row([gen, clutter, sprawl, time_smoothness])
 
     def get_initial_pops(self):
         gen = 0  # 初期世代なので0
@@ -215,7 +256,8 @@ class HistoryEvaluationStats:
             nepen = self.nepens[gen * self.population_length + i]
             eepen = self.eepens[gen * self.population_length + i]
             sprawl = self.sprawls[gen * self.population_length + i]
-            clutter = self.__calc_normalized_clutter([sprawl, nnpen, nepen, eepen])
+            time_smoothness = self.time_smoothnesses[gen * self.population_length + i]
+            clutter = self.__calc_normalized_clutter(nnpen, nepen, eepen)
 
             pops["sprawl"].append(sprawl)
             pops["clutter"].append(clutter)

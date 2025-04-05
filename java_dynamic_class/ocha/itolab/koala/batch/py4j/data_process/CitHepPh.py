@@ -3,21 +3,22 @@ from collections import defaultdict
 import os
 ### Cit-HepPhのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
-def get_graph_sequence_from_original_file():
+def get_graph_sequence_from_original_file(timestamps):
     """
     ntwk/配下のファイルを読み込み、graph_sequence を返す
     
     ntwk/配下のファイルのフォーマットは、
     start_node_id   end_node_id
 
+    Args:
+        timestamps (list): 使用するtimestampのリスト
     Returns:
-    - graph_sequence (dict): timestampをキーとして、ノードとエッジのリストを値とする辞書
+    - graph_sequence_dict (dict): timestampをキーとして、ノードとエッジのリストを値とする辞書
     """
 
-    timestamp_count = __get_timestamp_count()
-    graph_sequence = {}
+    graph_sequence_dict= {}
     
-    for timestamp in range(1, timestamp_count + 1):
+    for timestamp in timestamps:
         fname = f"{CIT_HEP_PH_DIR_PATH}ntwk/{timestamp}"
 
         nodes = set()
@@ -33,9 +34,9 @@ def get_graph_sequence_from_original_file():
                 edges.add((start_node_id, end_node_id))
         
         # グラフを追加
-        graph_sequence[timestamp] = (list(nodes), list(edges))
+        graph_sequence_dict[timestamp] = (list(nodes), list(edges))
     
-    return graph_sequence
+    return graph_sequence_dict
 
 def setup_data():
     """
