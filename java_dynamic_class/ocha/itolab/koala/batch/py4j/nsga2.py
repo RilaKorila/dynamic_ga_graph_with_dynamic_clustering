@@ -26,11 +26,12 @@ class NSGA2:
         self.layout_counter = 0
 
         # 適合度を最小化することで最適化されるような適合度クラスの作成
-        creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
+        if "FitnessMin" not in creator.__dict__:
+            creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
+
         # 個体クラスIndividualを作成
-        creator.create(
-            "Individual", array.array, typecode="d", fitness=creator.FitnessMin
-        )
+        if "Individual" not in creator.__dict__:
+            creator.create("Individual", array.array, typecode="d", fitness=creator.FitnessMin)
 
         ### 各種関数の設定
         # Toolboxの作成
