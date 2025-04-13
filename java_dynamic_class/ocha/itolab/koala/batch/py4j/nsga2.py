@@ -428,6 +428,7 @@ class NSGA2:
 
         dir_name = self.__create_directory(PNG_PATH + f"{timestamp}/")
         fig.savefig(dir_name + "result" + str(gen) + ".png")
+        plt.close(fig)
 
     def __save_fitness_coordinates(self, fitnesses_init, fitnesses, gen, timestamp):
         dir_name = self.__create_directory(PNG_PATH + f"{timestamp}/")
@@ -474,6 +475,7 @@ class NSGA2:
         plt.grid(True)
 
         fig.savefig(PNG_PATH + "final_plot_result.png")
+        plt.close(fig)
 
     def __create_directory(self, directory_name):
         os.makedirs(directory_name, exist_ok=True)

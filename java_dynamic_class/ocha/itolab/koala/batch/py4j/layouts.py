@@ -17,24 +17,31 @@ def visualize_summarized_graph(summarized_graph, pos, file_name):
     (ただし、同一metanode内のedgeは描画しない)
 
     Parameters:
-    - summarized_graph: Weighted NetworkX graph (ノードサイズは metanodesのサイズに比例, エッジの太さもmetaedgeのサイズに比例)
-    - pos: summarized_graphにlayout関数を適用した結果(実施するたびに結果が変わってしまうので、引数として渡す)
+    - summarized_graph: 
+        Weighted NetworkX graph (ノードサイズは metanodesのサイズに比例, エッジの太さもmetaedgeのサイズに比例)
+    - pos: 
+        summarized_graphにlayout関数を適用した結果(実施するたびに結果が変わってしまうので、引数として渡す)
+    - file_name: str
+        保存先のファイルパス（.png など）
     """
-    plt.figure(figsize=(8, 6))
 
-    # ノードサイズを取得
-    node_sizes = [summarized_graph.nodes[node]['size'] for node in summarized_graph.nodes()]
+    G = summarized_graph.copy()
+    
+    edges_to_remove = [(u,v) for u, v in G.edges() if u == v] # 同一metanode内のedgeは除く
+    G.remove_edges_from(edges_to_remove)
+
+    # ノードサイズを取得し、スケール
+    node_sizes = [summarized_graph.nodes[node]['size'] for node in G.nodes()]
     scaled_node_sizes = __scale_size(node_sizes, 200, 800)
 
-    # エッジの太さを取得
-    edges_to_remove = [(u,v) for u, v in summarized_graph.edges() if u == v] # 同一metanode内のedgeは除く
-    summarized_graph.remove_edges_from(edges_to_remove)
-    edge_weights = [summarized_graph[u][v]['weight'] for u, v in summarized_graph.edges()]
+    # エッジの太さを取得し、スケール
+    edge_weights = [summarized_graph[u][v]['weight'] for u, v in G.edges()]
     scaled_edge_weights = __scale_size(edge_weights, 5, 20)
 
     # グラフの描画
+    fig = plt.figure(figsize=(8, 6))
     nx.draw(
-        summarized_graph,
+        G,
         pos,
         with_labels=False, 
         edge_color="gray",
@@ -46,8 +53,8 @@ def visualize_summarized_graph(summarized_graph, pos, file_name):
         linewidths=1            # 枠線の太さ
     )
 
-    plt.savefig(file_name)
-    plt.close()
+    fig.savefig(file_name)
+    plt.close(fig)
 
 
 def __scale_size(raw_weights, min_val, max_val):
