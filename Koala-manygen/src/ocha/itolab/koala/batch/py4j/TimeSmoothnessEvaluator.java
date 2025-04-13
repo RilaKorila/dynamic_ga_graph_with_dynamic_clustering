@@ -2,13 +2,11 @@ package ocha.itolab.koala.batch.py4j;
 
 import ocha.itolab.koala.core.mesh.Vertex;
 import ocha.itolab.koala.core.data.Node;
+import ocha.itolab.koala.core.data.Graph;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import ocha.itolab.koala.core.data.Graph;
 
 public class TimeSmoothnessEvaluator {
     public TimeSmoothnessEvaluator() {
@@ -88,10 +86,6 @@ public class TimeSmoothnessEvaluator {
      * @return 時間平滑性
      */
     private static double calculateTimeSmoothness(final Graph previousGraph, final Graph currentGraph) {
-        if (previousGraph == null) {
-            return 0.0;
-        }
-
         double totalDistance = 0.0;
 
         for (Vertex currentVertex : currentGraph.mesh.getVertices()) {
@@ -99,7 +93,7 @@ public class TimeSmoothnessEvaluator {
 
                 // 同じDynamicCommunityに属しているかどうかを判断
                 if (currentVertex.getDynamicCommunityId() == previousVertex.getDynamicCommunityId()) {
-                    totalDistance += calculateDistance(currentVertex.getPosition(), previousVertex.getPosition());
+                    totalDistance += calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(), 10.0);
                 }
             }
         }
@@ -112,13 +106,15 @@ public class TimeSmoothnessEvaluator {
     /**
      * 2点間のユークリッド距離を計算する
      * 
-     * @param p1 点1の座標
-     * @param p2 点2の座標
+     * @param p1    点1の座標
+     * @param p2    点2の座標
+     * @param scale 座標が1以下の場合、ユークリッド距離を取ると小さくなり過ぎてしまうのでscaleで等倍処理する
      * @return 2点間のユークリッド距離
      */
-    private static double calculateDistance(final double[] p1, final double[] p2) {
-        double dx = p1[0] - p2[0];
-        double dy = p1[1] - p2[1];
+    private static double calculateDistance(final double[] p1, final double[] p2, final double scale) {
+        double dx = Math.abs(p1[0] - p2[0]) * scale;
+        double dy = Math.abs(p1[1] - p2[1]) * scale;
+
         return Math.sqrt(dx * dx + dy * dy);
     }
 
