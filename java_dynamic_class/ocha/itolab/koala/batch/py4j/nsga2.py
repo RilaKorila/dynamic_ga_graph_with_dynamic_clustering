@@ -27,7 +27,7 @@ class NSGA2:
 
         # 適合度を最小化することで最適化されるような適合度クラスの作成
         if "FitnessMin" not in creator.__dict__:
-            creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
+            creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
 
         # 個体クラスIndividualを作成
         if "Individual" not in creator.__dict__:
@@ -47,7 +47,7 @@ class NSGA2:
 
         self.debug_layout_counter = 0
 
-        # 個体を生成する関数”individual"を登録
+        # 個体を生成する関数"individual"を登録
         # gen_len回 toolbox.attributeを実行し、その値をcreator.Individualに格納して返す関数individualを定義 => tools.initRpeatを引数なしで呼び出せるように変化
         # self.toolbox.register(
         #     "individual",
@@ -204,10 +204,10 @@ class NSGA2:
         )
 
         # 軸の設定(軸の最小値/最大値は、プロット点の最小値/最大値より少しずらす)
-        self.set_axis(fitnesses_init)
+        self.set_axis_limit(fitnesses_init)
 
         # Hyper Volume算出用のreference point
-        self.ref_hv = [max(fitnesses_init[:, 0]), max(fitnesses_init[:, 1])]
+        self.ref_hv = [max(fitnesses_init[:, 0]), max(fitnesses_init[:, 1]), max(fitnesses_init[:, 2])]
 
         # 初期レイアウトをcsv出力
         self.write_layout_file_func(0, pop, self.timestamp)
@@ -291,25 +291,82 @@ class NSGA2:
 
         return pop, self.pop_init, logbook
 
-    def set_axis(self, fitnesses_init):
+    def set_axis_limit(self, fitnesses_init):
         """
         散布図用の軸の上限・下限を算出する
+        上限・下限それぞれ、基本的には初期世代の最大値・最小値とするが、多少揺らぎが発生することを考慮して、揺らぎ幅を設定する
 
         Args:
             fitnesses_init (numpy.ndarray): 初期世代の適応度
         """
-        self.PLOT_XLIM_MIN = (
+        # fitnesses_init は sprawl, clutter, time_smoothnessの順番
+
+        # sprawlは絶対値が大きいので 100 で割った値を揺らぎ幅とする
+        self.PLOT_SPRAWL_MIN = ( # 最小値 - 揺らぎ幅
             min(fitnesses_init[:, 0]) - max(fitnesses_init[:, 0]) / 100.0
         )
-        self.PLOT_XLIM_MAX = (
+        self.PLOT_SPRAWL_MAX = ( # 最大値 + 揺らぎ幅
             max(fitnesses_init[:, 0]) + max(fitnesses_init[:, 0]) / 100.0
         )
-        self.PLOT_YLIM_MIN = (
+
+        # clutterは絶対値が小さいので 10 で割った値を揺らぎ幅とする
+        self.PLOT_CLUTTER_MIN = (
             min(fitnesses_init[:, 1]) - max(fitnesses_init[:, 1]) / 10.0
         )
-        self.PLOT_YLIM_MAX = (
+        self.PLOT_CLUTTER_MAX = (
             max(fitnesses_init[:, 1]) + max(fitnesses_init[:, 1]) / 10.0
         )
+
+        # time_smoothness 絶対値が大きいので 100 で割った値を揺らぎ幅とする
+        self.PLOT_TIMESMOOTHNESS_MIN = (
+            min(fitnesses_init[:, 2]) - max(fitnesses_init[:, 2]) / 100.0
+        )
+        self.PLOT_TIMESMOOTHNESS_MAX = (
+            max(fitnesses_init[:, 2]) + max(fitnesses_init[:, 2]) / 100.0
+        )
+    
+    def save_basic_scatter(self, initial_plot_x, initial_plot_y, optimized_plot_x, optimized_plot_y, x_label, y_label, title, fname):
+        """
+        散布図で描画する
+        """
+
+        fig, ax = plt.subplots(figsize=(6, 5))
+
+        ax.plot(initial_plot_x, initial_plot_y, "b.", label="Initial")
+        ax.plot(optimized_plot_x, optimized_plot_y, "r.", label="Optimized")
+
+        # ラベルの追加
+        for i, (x, y) in enumerate(zip(initial_plot_x, initial_plot_y)):
+            ax.annotate(str(i), (x, y), fontsize=8)
+        for i, (x, y) in enumerate(zip(optimized_plot_x, optimized_plot_y)):
+            ax.annotate(str(i), (x, y), fontsize=8)
+        
+        if x_label == "sprawl":
+            ax.set_xlim(self.PLOT_SPRAWL_MIN, self.PLOT_SPRAWL_MAX)
+        elif x_label == "clutter":
+            ax.set_xlim(self.PLOT_CLUTTER_MIN, self.PLOT_CLUTTER_MAX)
+        elif x_label == "time_smoothness":
+            ax.set_xlim(self.PLOT_TIMESMOOTHNESS_MIN, self.PLOT_TIMESMOOTHNESS_MAX)
+
+        if y_label == "sprawl":
+            ax.set_ylim(self.PLOT_SPRAWL_MIN, self.PLOT_SPRAWL_MAX)
+        elif y_label == "clutter":
+            ax.set_ylim(self.PLOT_CLUTTER_MIN, self.PLOT_CLUTTER_MAX)
+        elif y_label == "time_smoothness":
+            ax.set_ylim(self.PLOT_TIMESMOOTHNESS_MIN, self.PLOT_TIMESMOOTHNESS_MAX)
+        
+        # 軸ラベル
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_title(title)
+        ax.legend(loc="upper right")
+        ax.grid(True)
+
+        # ファイル保存            
+        fig.savefig(fname)
+        
+        plt.close(fig)
+
     
     def evaluate(self, invalid_ind, gen):
         """
@@ -333,8 +390,9 @@ class NSGA2:
             # 前のレイアウトがない場合は現在のレイアウトの評価のみ
             sprawl = current_fitness[0]
             clutter = current_fitness[1]
-            
-            ind.fitness.values = (sprawl, clutter)
+            time_smoothness = current_fitness[2]
+
+            ind.fitness.values = (sprawl, clutter, time_smoothness)
 
     def write_log(self, path, logbook):
         """
@@ -368,68 +426,28 @@ class NSGA2:
         )
         fitnesses = np.array([list(pop[i].fitness.values) for i in range(len(pop))])
 
-        # 現在のレイアウトと前のレイアウトに分割
-        current_layout_fitnesses_init = fitnesses_init[:self.current_layout_gene_len]
-        current_layout_fitnesses = fitnesses[:self.current_layout_gene_len]
-        
         # 現在のレイアウトの可視化
-        self.__vis_each_result_scatterplot(current_layout_fitnesses_init, 
-                                         current_layout_fitnesses, 
-                                         gen, 
-                                         self.timestamp)
-        self.__save_fitness_coordinates(current_layout_fitnesses_init, 
-                                      current_layout_fitnesses, 
-                                      gen,
-                                      self.timestamp)
+        self.__vis_each_result_scatterplot(fitnesses_init, fitnesses, gen, self.timestamp)
+        self.__save_fitness_coordinates(fitnesses_init, fitnesses, gen, self.timestamp)
         
-        # 前のレイアウトがある場合は可視化
-        if self.has_previous_layout:
-            previous_layout_fitnesses_init = fitnesses_init[self.current_layout_gene_len:]
-            previous_layout_fitnesses = fitnesses[self.current_layout_gene_len:]
-            
-            self.__vis_each_result_scatterplot(previous_layout_fitnesses_init, 
-                                             previous_layout_fitnesses, 
-                                             gen, 
-                                             self.previous_timestamp)
-            self.__save_fitness_coordinates(previous_layout_fitnesses_init, 
-                                          previous_layout_fitnesses, 
-                                          gen,
-                                          self.previous_timestamp)
-
     def __vis_each_result_scatterplot(self, fitnesses_init, fitnesses, gen, timestamp):
-        fig = plt.figure()
-        plt.plot(fitnesses_init[:, 0], fitnesses_init[:, 1], "b.", label="Initial")
-        plt.plot(fitnesses[:, 0], fitnesses[:, 1], "r.", label="Optimized")
+        pairs = [
+            (0, 1, "sprawl", "clutter"),
+            (0, 2, "sprawl", "time_smoothness"),
+            (1, 2, "clutter", "time_smoothness")
+        ]
 
-        if np.isnan(self.PLOT_XLIM_MIN):
-            self.PLOT_XLIM_MIN = 0
-        if np.isnan(self.PLOT_XLIM_MAX):
-            self.PLOT_XLIM_MAX = 1
-        if np.isnan(self.PLOT_YLIM_MIN):
-            self.PLOT_YLIM_MIN = 0
-        if np.isnan(self.PLOT_YLIM_MAX):
-            self.PLOT_YLIM_MAX = 1
+        for x_idx, y_idx, x_label, y_label in pairs:
+            initial_plot_x = fitnesses_init[:, x_idx]
+            initial_plot_y = fitnesses_init[:, y_idx]
+            optimized_plot_x = fitnesses[:, x_idx]
+            optimized_plot_y = fitnesses[:, y_idx]
 
-        plt.xlim(self.PLOT_XLIM_MIN, self.PLOT_XLIM_MAX)
-        plt.ylim(self.PLOT_YLIM_MIN, self.PLOT_YLIM_MAX)
+            dir_name = self.__create_directory(PNG_PATH + f"{timestamp}/{x_label}_vs_{y_label}/")
+            fname = dir_name + f"result_gen{gen}.png"
+            title = f"Generation {gen}: {x_label} vs {y_label}"
+            self.save_basic_scatter(initial_plot_x, initial_plot_y, optimized_plot_x, optimized_plot_y, x_label, y_label, title, fname)
 
-        # add label to each plot: init
-        for i, (x, y) in enumerate(zip(fitnesses_init[:, 0], fitnesses_init[:, 1])):
-            plt.annotate(str(i), (x, y))
-
-        # add label to each plot: the generation
-        for i, (x, y) in enumerate(zip(fitnesses[:, 0], fitnesses[:, 1])):
-            plt.annotate(str(i), (x, y))
-
-        plt.legend(loc="upper right")
-        plt.title("fitnesses")
-        plt.xlabel("sprawl")
-        plt.ylabel("clutter")
-        plt.grid(True)
-
-        dir_name = self.__create_directory(PNG_PATH + f"{timestamp}/")
-        fig.savefig(dir_name + "result" + str(gen) + ".png")
-        plt.close(fig)
 
     def __save_fitness_coordinates(self, fitnesses_init, fitnesses, gen, timestamp):
         dir_name = self.__create_directory(PNG_PATH + f"{timestamp}/")
@@ -452,31 +470,21 @@ class NSGA2:
 
 
     def __viz_scatter_plot(self, initial_pops, final_pops):
-        fig = plt.figure()
-        plt.plot(initial_pops["sprawl"], initial_pops["clutter"], "b.", label="Initial")
-        plt.plot(final_pops["sprawl"], final_pops["clutter"], "r.", label="Optimized")
+        pairs = [
+            ("sprawl", "clutter"),
+            ("sprawl", "time_smoothness"),
+            ("clutter", "time_smoothness")
+        ]
 
-        plt.xlim(self.PLOT_XLIM_MIN, self.PLOT_XLIM_MAX)
-        plt.ylim(self.PLOT_YLIM_MIN, self.PLOT_YLIM_MAX)
-
-        # add label to each plot: init
-        for i, (x, y) in enumerate(
-            zip(initial_pops["sprawl"], initial_pops["clutter"])
-        ):
-            plt.annotate(str(i), (x, y))
-
-        # add label to each plot: the generation
-        for i, (x, y) in enumerate(zip(final_pops["sprawl"], final_pops["clutter"])):
-            plt.annotate(str(i), (x, y))
-
-        plt.legend(loc="upper right")
-        plt.title("fitnesses")
-        plt.xlabel("sprawl")
-        plt.ylabel("clutter")
-        plt.grid(True)
-
-        fig.savefig(PNG_PATH + "final_plot_result.png")
-        plt.close(fig)
+        for x_label, y_label in pairs:
+            dirname = self.__create_directory(f"{PNG_PATH}{self.timestamp}/")
+            initial_plot_x = initial_pops[x_label]
+            initial_plot_y = initial_pops[y_label]
+            optimized_plot_x = final_pops[x_label]
+            optimized_plot_y = final_pops[y_label]
+            title = f"Fitnesses: {x_label} vs {y_label}"
+            fname = f"{dirname}/final_plot_{x_label}_vs_{y_label}.png"
+            self.save_basic_scatter(initial_plot_x, initial_plot_y, optimized_plot_x, optimized_plot_y, x_label, y_label, title, fname)
 
     def __create_directory(self, directory_name):
         os.makedirs(directory_name, exist_ok=True)

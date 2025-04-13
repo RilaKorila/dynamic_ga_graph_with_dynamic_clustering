@@ -175,9 +175,9 @@ def select_best_layouts(population, n=5):
     # パレートフロントの個体をsprawlとclutterの重み付け和でソート
     weighted_scores = []
     for ind in population:
-        sprawl, clutter = ind.fitness.values
+        sprawl, clutter, time_smoothness = ind.fitness.values
         # sprawlとclutterの重み付け和を計算（重みは調整可能）
-        weighted_score = 0.5 * sprawl + 0.5 * clutter
+        weighted_score = 0.3 * sprawl + 0.3 * clutter + 0.4 * time_smoothness
         weighted_scores.append((ind, weighted_score))
     
     # スコアでソート

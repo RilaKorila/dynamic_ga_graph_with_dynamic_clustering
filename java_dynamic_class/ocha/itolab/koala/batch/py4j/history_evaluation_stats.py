@@ -96,7 +96,7 @@ class HistoryEvaluationStats:
             individual (float[]): 遺伝子を表現する配列([current_layout, previous_layout]の順で並んでいる)
 
         Returns:
-            Pair(float, float): 与えられた遺伝子のsprawl, clutterの評価のペア
+            Pair(float, float, float): 与えられた遺伝子のsprawl, clutter, timesmoothnessの評価のペア
 
         Note:
             clutterの算出方法は3種類
@@ -120,7 +120,7 @@ class HistoryEvaluationStats:
         row = [generation, results[1], results[2], results[3], clutter, sprawl, time_smoothness]
         PenaltyCsvWriter.write_row(row)
 
-        return (sprawl, clutter)
+        return (sprawl, clutter, time_smoothness)
 
     def __calc_normalized_clutter(self, nnpen, nepen, eepen):
         """
@@ -250,7 +250,7 @@ class HistoryEvaluationStats:
         return self.__get_specific_generation(gen)
 
     def __get_specific_generation(self, gen):
-        pops = {"sprawl": [], "clutter": []}
+        pops = {"sprawl": [], "clutter": [], "time_smoothness": [], }
         for i in range(self.population_length):
             nnpen = self.nnpens[gen * self.population_length + i]
             nepen = self.nepens[gen * self.population_length + i]
@@ -261,5 +261,6 @@ class HistoryEvaluationStats:
 
             pops["sprawl"].append(sprawl)
             pops["clutter"].append(clutter)
+            pops["time_smoothness"].append(time_smoothness)
 
         return pops
