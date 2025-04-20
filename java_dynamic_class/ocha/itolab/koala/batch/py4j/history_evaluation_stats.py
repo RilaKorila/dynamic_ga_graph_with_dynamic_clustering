@@ -241,26 +241,3 @@ class HistoryEvaluationStats:
 
                 ClutterSprawlCsvWriter.write_row([gen, clutter, sprawl, time_smoothness])
 
-    def get_initial_pops(self):
-        gen = 0  # 初期世代なので0
-        return self.__get_specific_generation(gen)
-
-    def get_final_pops(self):
-        gen = self.NGEN - 1  # 最終世代なので世代数-1
-        return self.__get_specific_generation(gen)
-
-    def __get_specific_generation(self, gen):
-        pops = {"sprawl": [], "clutter": [], "time_smoothness": [], }
-        for i in range(self.population_length):
-            nnpen = self.nnpens[gen * self.population_length + i]
-            nepen = self.nepens[gen * self.population_length + i]
-            eepen = self.eepens[gen * self.population_length + i]
-            sprawl = self.sprawls[gen * self.population_length + i]
-            time_smoothness = self.time_smoothnesses[gen * self.population_length + i]
-            clutter = self.__calc_normalized_clutter(nnpen, nepen, eepen)
-
-            pops["sprawl"].append(sprawl)
-            pops["clutter"].append(clutter)
-            pops["time_smoothness"].append(time_smoothness)
-
-        return pops
