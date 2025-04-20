@@ -102,7 +102,7 @@ class NSGA2:
             self.crossover_only_current_layout,
             low=self.MIN_COORDINATE,
             up=self.MAX_COORDINATE,
-            eta=20.0,
+            eta=5.0,
         )
 
         ## 突然変異
@@ -112,7 +112,7 @@ class NSGA2:
             self.mutate_only_current_layout,
             low=self.MIN_COORDINATE,
             up=self.MAX_COORDINATE,
-            eta=40.0,
+            eta=5.0,
             indpb=1.0 / self.NDIM,
         )
 
@@ -193,9 +193,12 @@ class NSGA2:
         self.pop_init = pop[:]
         invalid_ind = [ind for ind in pop if not ind.fitness.valid]
 
+        self.write_comment("初期世代")
+
         # 初期世代の評価
         self.evaluate(invalid_ind, 0)
 
+        self.write_indi(invalid_ind)
         pop = self.toolbox.select(pop, len(pop))
 
         # 軸の上限と下限をfitnesses_initから算出
@@ -212,7 +215,7 @@ class NSGA2:
         # 初期レイアウトをcsv出力
         self.write_layout_file_func(0, pop, self.timestamp)
         if self.has_previous_layout:
-            self.write_layout_file_func(0, pop, self.previous_timestamp)
+            self.write_layout_file_func(0, pop, self.previous_timestamp, is_previous=True)
 
         record = stats.compile(pop)
         logbook.record(gen=0, evals=len(invalid_ind), **record)
@@ -247,6 +250,8 @@ class NSGA2:
 
             # 適応度を削除した個体について適応度の再評価を行う
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            self.write_comment(f"{gen}世代目")
+            self.write_indi(invalid_ind)
 
             # 評価
             self.evaluate(invalid_ind, gen)
@@ -284,12 +289,25 @@ class NSGA2:
         # 最終的に残った遺伝子を全てファイル出力
         self.write_layout_file_func(gen, pop, self.timestamp)  
         if self.has_previous_layout:
-            self.write_layout_file_func(gen, pop, self.previous_timestamp)  
+            self.write_layout_file_func(gen, pop, self.previous_timestamp, is_previous=True)
 
         # 実験：final condition決定用
         self.viz_final_result()
 
         return pop, self.pop_init, logbook
+
+    def write_indi(self, indi):
+        path = "memo.txt"
+        with open(path, "a") as f:
+            for x in indi:
+                f.write(str(x))
+                f.write("\n")
+            f.write("\n\n")
+    def write_comment(self, comment):
+        path = "memo.txt"
+        with open(path, "a") as f:
+            f.write(comment)
+            f.write("\n")
 
     def set_axis_limit(self, fitnesses_init):
         """
@@ -303,7 +321,7 @@ class NSGA2:
 
         # sprawlは絶対値が大きいので 100 で割った値を揺らぎ幅とする
         self.PLOT_SPRAWL_MIN = ( # 最小値 - 揺らぎ幅
-            min(fitnesses_init[:, 0]) - max(fitnesses_init[:, 0]) / 100.0
+            min(fitnesses_init[:, 0]) - max(fitnesses_init[:, 0]) / 10.0
         )
         self.PLOT_SPRAWL_MAX = ( # 最大値 + 揺らぎ幅
             max(fitnesses_init[:, 0]) + max(fitnesses_init[:, 0]) / 100.0
@@ -319,7 +337,7 @@ class NSGA2:
 
         # time_smoothness 絶対値が大きいので 100 で割った値を揺らぎ幅とする
         self.PLOT_TIMESMOOTHNESS_MIN = (
-            min(fitnesses_init[:, 2]) - max(fitnesses_init[:, 2]) / 100.0
+            min(fitnesses_init[:, 2]) - max(fitnesses_init[:, 2]) / 10.0
         )
         self.PLOT_TIMESMOOTHNESS_MAX = (
             max(fitnesses_init[:, 2]) + max(fitnesses_init[:, 2]) / 100.0
@@ -490,6 +508,7 @@ class NSGA2:
         os.makedirs(directory_name, exist_ok=True)
         return directory_name
 
+
     def crossover_only_current_layout(self, ind1, ind2, eta, low, up):
         """現在のレイアウトと過去のレイアウトを分けて交叉を行う関数
         
@@ -505,9 +524,13 @@ class NSGA2:
             tuple: 交叉後の個体1と個体2のタプル
         """
         # 現在のレイアウト部分のみを交叉
-        ind1_current_layout = ind1[:self.current_layout_gene_len]
-        ind2_current_layout = ind2[:self.current_layout_gene_len]
-        ind1_current_layout, ind2_current_layout = tools.cxSimulatedBinaryBounded(ind1_current_layout, ind2_current_layout, eta, low, up)
+        ind1_layout = ind1[:self.current_layout_gene_len]
+        ind2_layout = ind2[:self.current_layout_gene_len]
+        ind1_layout, ind2_layout = tools.cxSimulatedBinaryBounded(ind1_layout, ind2_layout, eta, low, up)
+
+        # 書き換える
+        ind1[:self.current_layout_gene_len] = ind1_layout
+        ind2[:self.current_layout_gene_len] = ind2_layout
 
         # 過去のレイアウト部分のみを交叉
         if self.has_previous_layout:
@@ -515,12 +538,12 @@ class NSGA2:
             ind2_previous_layout = ind2[self.current_layout_gene_len:]
 
             # 交叉後の個体を返す [現在のtimestampのレイアウト, previous_timestampのレイアウト] の順
-            ind1_current_layout = ind1_current_layout.extend(ind1_previous_layout)
-            ind2_current_layout = ind2_current_layout.extend(ind2_previous_layout)
+            ind1[self.current_layout_gene_len:] = ind1_previous_layout
+            ind2[self.current_layout_gene_len:] = ind2_previous_layout
 
-        return ind1_current_layout, ind2_current_layout
-
-    def mutate_only_current_layout(self, ind, eta, low, up, indpb):
+        return ind1, ind2
+    
+    def mutate_only_current_layout(self, ind, eta, low, up, indpb, sigma_prev=0.05, prev_mutpb=0.02):
         """現在のレイアウトのみを突然変異させる関数
         
         Args:
@@ -535,13 +558,23 @@ class NSGA2:
             A tuple of one individual.
         """
         ind_current_layout = ind[:self.current_layout_gene_len]
+        
         # tools.mutPolynomialBounded は tapleを返すので、[0]を取る
-        mutated_ind = tools.mutPolynomialBounded(ind_current_layout, eta, low, up, indpb)[0]
+        mutated_ind_current = tools.mutPolynomialBounded(ind_current_layout, eta, low, up, indpb)[0]
 
         if self.has_previous_layout:
-            # previous_layoutは突然変異せずそのまま
-            ind_previous_layout = ind[self.current_layout_gene_len:]
-            mutated_ind = mutated_ind.extend(ind_previous_layout)
+            ind_previous = ind[self.current_layout_gene_len:]
+            # 非常に弱い変異（ガウス）を加える（確率は低く）
+            for i in range(0, len(ind_previous), 2):
+                if random.random() < prev_mutpb:
+                    ind_previous[i] += random.gauss(0, sigma_prev)       # x
+                    ind_previous[i+1] += random.gauss(0, sigma_prev)     # y
+
+            ind[:] = mutated_ind_current + ind_previous
+        
+        else:
+            ind[:] = mutated_ind_current
+
 
         # mutate メソッドは tuple を返すので、このメソッドも揃える
-        return mutated_ind,
+        return ind,

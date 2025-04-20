@@ -30,8 +30,8 @@ public class ObjectFunction {
 		return _res;
 	}
 
-	public void writeCsv(final int generation, final int id, final double[] gene, final int timestamp) {
-		KoalaToSprawlter.writeLayoutFile(gene, generation, id, timestamp);
+	public void writeCsv(final double[] gene, final int timestamp, final String fname) {
+		KoalaToSprawlter.writeLayoutFile(gene, timestamp, fname);
 	}
 
 	private Map<String, Double> getSprawlter(final int generation, final int id, final double[] gene,
@@ -39,18 +39,19 @@ public class ObjectFunction {
 		Map<String, Double> sprawlterResultMap = new HashMap<>();
 
 		// もしすでに計算済みなら計算結果を返す
-		if (cache_result.containsKey(generation + "-" + id)) {
-			sprawlterResultMap = cache_result.get(generation + "-" + id);
+		final String casheKey = timestamp + "-" + generation + "-" + id;
+		if (cache_result.containsKey(casheKey)) {
+			sprawlterResultMap = cache_result.get(casheKey);
 		} else {
 			// execute KoalaToSprawlter
 			sprawlterResultMap = KoalaToSprawlter.execute(gene, timestamp); // Experiment 1-S
 			// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
-			cache_result.put(generation + "-" + id, sprawlterResultMap);
+			cache_result.put(casheKey, sprawlterResultMap);
 		}
 
 		sprawlterResultMap = KoalaToSprawlter.execute(gene, timestamp); // Experiment 1-S
 		// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
-		cache_result.put(generation + "-" + id, sprawlterResultMap);
+		cache_result.put(casheKey, sprawlterResultMap);
 		return sprawlterResultMap;
 	}
 

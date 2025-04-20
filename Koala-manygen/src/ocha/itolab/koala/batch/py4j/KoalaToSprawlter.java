@@ -95,14 +95,14 @@ public class KoalaToSprawlter {
 		LinLogLayout.setInitialPositionList(poslist);
 	}
 
-	static void writeLayoutFile(double init[], int generation, int id, int timestamp) {
+	static void writeLayoutFile(double init[], int timestamp, final String fname) {
 		final String dirName = createDirectory(ResourceFile.RESULT.path() + "/" + timestamp + "/");
-		final String filename = dirName + "layout" + generation + "-" + id + ".csv";
+		final String filePath = dirName + fname;
 
 		graph = getGraph(init, timestamp);
 
 		try {
-			LayoutFileWriter.write(graph, filename);
+			LayoutFileWriter.write(graph, filePath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
