@@ -43,9 +43,6 @@ def load_generations_from_file(filepath):
     generations = []
     current_generation = []
 
-    print("これはtxtファイル")
-    print(filepath)
-
     with open(filepath, 'r') as f:
         for line in f:
             line = line.strip()
@@ -131,7 +128,7 @@ def plot_generation_scatters(generations, output_dir):
                 "ymax": y_max,
             }
 
-            dir_name = __create_directory(f"{output_dir}{x_label}_vs_{y_label}/")
+            dir_name = __create_directory(f"{output_dir}/{x_label}_vs_{y_label}/")
             
             save_basic_scatter(
                 initial_gen[:, x_idx], initial_gen[:, y_idx],
