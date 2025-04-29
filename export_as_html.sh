@@ -39,9 +39,11 @@ source streamlit_csv/bin/activate
 
 # 特定のtimestamp の graph可視化
 # 引数：CSV_FOLDER, html_folder, node_color, node_size, target_generation
-node_color="vectors" # vertexごとに彩色. node_nums, vectors, node_degree, high_node_degree  のどれか
+# vertexごとに彩色. node_nums, vectors, node_degree, high_node_degree  のどれか
+# dynamic_graphの時は、dynamic_community_idも選択可能
+node_color="dynamic_community_id" 
 node_size="same"
-python createHtmls.py ${csv_folder} ${html_folder} ${node_color} ${node_size} ${target_generation}
+python createHtmls.py ${csv_folder} ${html_folder} ${node_color} ${node_size} ${target_generation} ${target_timestamp}
 
 # 環境を閉じる
 deactivate

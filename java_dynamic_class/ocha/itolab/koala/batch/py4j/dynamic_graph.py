@@ -24,9 +24,8 @@ class DynamicGraph:
         
         # 動的コミュニティの追跡結果を保存
         self.time_ordered_dynamic_communities_dict = self.get_time_ordered_dynamic_communities_dict()
-        
-        
-        # self.write_dynamic_communities_to_file(CIT_HEP_PH_DIR_PATH + "dynamic_communities/", self.time_ordered_dynamic_communities_dict)
+
+        self.write_dynamic_communities_to_file(CIT_HEP_PH_DIR_PATH + "dynamic_communities/", self.time_ordered_dynamic_communities_dict)
 
     def create_summarized_graph(self, communities, timestamp):
         """
@@ -150,13 +149,14 @@ class DynamicGraph:
     
     def _check_assigned_dynamic_community_id(self):
         """
-        coms/配下のファイルに含まれるノードIDと、timestamoごとに分割したdynamic_communityに含まれるノードIDが各timestampで一致していることを確認する
+        coms/配下のファイルに含まれるノードIDと、timestampごとに分割したdynamic_communityに含まれるノードIDが各timestampで一致していることを確認する
         """
         for timestamp in self.timestamps:
             # coms/配下のファイルと、dynamic_community_1.txt の内容を比較する
             coms_file_path = CIT_HEP_PH_DIR_PATH + "coms/runDynamicModularity_Cit-HepPh_com_" + str(timestamp) + "_nodes.csv"
 
-            nodes_list= list()
+            # dynamic clusteringの結果
+            dynamic_clustering_result_nodes_list= list()
             with open(coms_file_path, "r") as f:
                 coms_file_content = f.read()
                 for line in coms_file_content.split("\n"):
@@ -164,8 +164,9 @@ class DynamicGraph:
                         continue
                     nodes = line.split(",")
                     sorted_nodes = sorted(nodes)
-                    nodes_list.append(sorted_nodes)
+                    dynamic_clustering_result_nodes_list.append(sorted_nodes)
 
+            # community trackingの結果
             dc_nodes_list = list()
             with open(CIT_HEP_PH_DIR_PATH + "dynamic_communities/dynamic_community_" + str(timestamp) + ".txt", "r") as f:
                 dynamic_community_file_content = f.read()
@@ -179,6 +180,9 @@ class DynamicGraph:
                     dc_nodes_list.append(sorted_dc_nodes)
 
             for nodes in dc_nodes_list:
-                if nodes not in nodes_list:
+                if nodes not in dynamic_clustering_result_nodes_list:
                     print("WARNING: dynamic_community_" + str(timestamp) + ".txt に存在しないノードが含まれています。")
                     print(nodes)
+            for nodes in dynamic_clustering_result_nodes_list:
+                if nodes not in dc_nodes_list:
+                    print("WARNING: dynamic_community_" + str(timestamp) + ".txt の内容が不足しています。")
