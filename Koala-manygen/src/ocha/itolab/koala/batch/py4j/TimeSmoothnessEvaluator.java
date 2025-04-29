@@ -93,7 +93,10 @@ public class TimeSmoothnessEvaluator {
 
                 // 同じDynamicCommunityに属しているかどうかを判断
                 if (currentVertex.getDynamicCommunityId() == previousVertex.getDynamicCommunityId()) {
-                    totalDistance += calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(), 10.0);
+                    // 大きいmetanodeほどインパクトが大きいので、metanodeに属するnode数を移動距離に乗算する
+                    final double penalty = calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(),
+                            10.0) * currentVertex.getNodeNum();
+                    totalDistance += penalty;
                 }
             }
         }

@@ -102,6 +102,13 @@ public class Vertex {
 		return Mesh.LAYER_NUMNODES.length;
 	}
 
+	/**
+	 * metanodeに属するnode数を返却
+	 */
+	public int getNodeNum() {
+		return nodes.size();
+	}
+
 	public int getDynamicCommunityId() {
 		return dynamicCommunityId;
 	}
