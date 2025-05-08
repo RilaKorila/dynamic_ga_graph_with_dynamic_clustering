@@ -8,12 +8,13 @@ import networkx as nx
 #### DynamicGraphクラス ####
 class DynamicGraph:
     def __init__(self, timestamps):
+        self.timestamps = timestamps
+
         # 使用するデータに依存した setup_data メソッドを呼び出す
-        setup_data()
+        setup_data(self.timestamps)
 
         ## データを取得 （使用するデータを変えるときはここを変更する）
-        self.graph_sequence_dict = get_graph_sequence_from_original_file(timestamps)
-        self.timestamps = timestamps
+        self.graph_sequence_dict = get_graph_sequence_from_original_file(self.timestamps)
 
         # timestampとcommunityの紐付け
         self.communities_dict = {timestamp : get_community_detection_result(timestamp) 
@@ -82,8 +83,7 @@ class DynamicGraph:
         """
         communities = list(self.communities_dict.values())
         # theta値は調整可能。値が大きいほど厳密なマッチングになる
-        all_dynamic_communities = track_communities(communities, theta=0.2)
-
+        all_dynamic_communities = track_communities(communities, theta=0.1)
 
         time_ordered_dynamic_communities_dict = {}
 
@@ -91,14 +91,14 @@ class DynamicGraph:
         for t, timestamp in enumerate(self.timestamps):
             dynamic_communities = []
             # 各動的コミュニティについて処理
-            for dynamic_community_id,dynamic_community in enumerate(all_dynamic_communities):
+            for dynamic_community_id, community_list in enumerate(all_dynamic_communities):
                 # そのタイムスタンプでのコミュニティを探す
-                for time_idx, nodes in dynamic_community:
+                for time_idx, community in community_list:
                     if timestamp == self.timestamps[time_idx]:  # インデックスで比較
-                        dynamic_communities.append(nodes)
-                        break
-                # コミュニティが見つからない場合は空のセットを追加
-                dynamic_communities.append(set())
+                        dynamic_communities.append(community)
+                    else:
+                        # コミュニティが見つからない場合は空のセットを追加
+                        dynamic_communities.append(set())
             
             time_ordered_dynamic_communities_dict[timestamp] = dynamic_communities
 

@@ -15,40 +15,36 @@ def track_communities(partitions: List[List[Set[int]]], theta: float = 0.3) -> L
     """
     dynamic_communities = []
 
-    # 各 time step t のコミュニティ C にラベルをつけておく
+    # timestamp t のコミュニティ C にラベルをつけておく
     labeled_partitions = []
-    for t, part in enumerate(partitions):
-        labeled_partitions.append([(t, c) for c in part])
+    for t, partition in enumerate(partitions):
+        labeled_partitions.append([(t, community) for community in partition])
 
     # 最初の時間のコミュニティはそのまま動的コミュニティとして登録
-    for t, c in labeled_partitions[0]:
-        dynamic_communities.append([(t, c)])
+    for t, community in labeled_partitions[0]:
+        dynamic_communities.append([(t, community)])
 
     # t=1 以降を順に処理
     for t in range(1, len(partitions)):
-        used = set()
 
-        for dc in dynamic_communities:
-            _, last_c = dc[-1]
-            best_match = -1
-            best_score = 0.0
+        # 時刻tのコミュニティを順に比較
+        for i, (cur_timestamp, cur_community) in enumerate(labeled_partitions[t]):
+            is_similar_community_found = False
 
-            for i, (curr_t, curr_c) in enumerate(labeled_partitions[t]):
-                if i in used:
-                    continue
-                sim = __jaccard_similarity(last_c, curr_c)
-                if sim >= theta and sim > best_score:
-                    best_match = i
-                    best_score = sim
+            for dc in dynamic_communities:
+                # dc: [(1, [ts=1でそのdc_idに属するnode]), (2, [ts=2でそのdc_idに属するnode]), ... ] 
+                last_timestamp, last_com = dc[-1] # 1つ前のtimestampで、そのdc_idに該当するcommunity
 
-            if best_match >= 0:
-                dc.append(labeled_partitions[t][best_match])
-                used.add(best_match)
+                sim = __jaccard_similarity(last_com, cur_community)
 
-        # まだ割り当てられていないコミュニティは新しい動的コミュニティとして登録
-        for i, (curr_t, curr_c) in enumerate(labeled_partitions[t]):
-            if i not in used:
-                dynamic_communities.append([(curr_t, curr_c)])
+                if sim >= theta:
+                    # 1つ前のtimestampに類似のcommunityがあった場合
+                    is_similar_community_found = True
+                    dc.append((cur_timestamp, cur_community))
+
+            # 1つ前のtimestampの全てのcommunityを見ても類似のcommunityがなかった場合
+            if not is_similar_community_found:
+                dynamic_communities.append([(cur_timestamp, cur_community)])
 
     return dynamic_communities
 

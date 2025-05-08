@@ -20,7 +20,7 @@ CLASS_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_cluste
 PNG_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/_plot_result/"
 SUPERGRAPH_PNG_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/_supergraph_result/"
 NBAF_COAUTHORS_CSV_PATH = "{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/Koala-manygen/NBAF_Coauthorship_12dim.csv"
-CIT_HEP_PH_DIR_PATH = "{プロジェクトルート}/d{プロジェクトルート}/ynamic_ga_graph_with_dynamic_clustering/data/Cit-HepPh/"
+CIT_HEP_PH_DIR_PATH = "{プロジェクトルート}/{プロジェクトルート}/dynamic_ga_graph_with_dynamic_clustering/data/Cit-HepPh/"
 ```
 
 ※ {プロジェクトルート}は、実際のプロジェクトのルートディレクトリの絶対パスに置き換える。

@@ -1,6 +1,6 @@
 from constants import CIT_HEP_PH_DIR_PATH
 from collections import defaultdict
-import os
+
 ### Cit-HepPhのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
 def get_graph_sequence_from_original_file(timestamps):
@@ -38,15 +38,13 @@ def get_graph_sequence_from_original_file(timestamps):
     
     return graph_sequence_dict
 
-def setup_data():
+def setup_data(timestamps):
     """
     Cit-HepPhのデータを加工し、必要なファイル群を作成する。
     """
     print("=========== setup_data ===========")
-
-    timestamp_count = __get_timestamp_count()
     
-    for timestamp in range(1, timestamp_count + 1):
+    for timestamp in timestamps:
         edges = __get_edges(timestamp)
         nodes = __get_nodes(timestamp)
 
@@ -56,16 +54,6 @@ def setup_data():
 
         # Sprawlが読み込めるようにフォーマットに変換
         __write_connectivity(nodes, edges, timestamp)
-
-def __get_timestamp_count():
-    """
-    Cit-HepPhのデータのtimestampの数を返す
-    """
-    # coms/配下のファイルの数を数える
-    dir_name = f"{CIT_HEP_PH_DIR_PATH}coms/"
-    timestamp_count = len(os.listdir(dir_name))
-
-    return timestamp_count
 
 def __get_edges(timestamp):
     fname = f"{CIT_HEP_PH_DIR_PATH}ntwk/{timestamp}"
