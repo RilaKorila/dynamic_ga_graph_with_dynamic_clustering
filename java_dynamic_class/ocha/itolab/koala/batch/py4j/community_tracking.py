@@ -13,37 +13,33 @@ def track_communities(partitions: List[List[Set[int]]], theta: float = 0.3) -> L
     Returns:
         List[List[Tuple[int, Set[int]]]] 動的コミュニティのリスト。
     """
-    dynamic_communities = []
+    dynamic_communities: List[List[Tuple[int, Set[int]]]] = []
 
-    # timestamp t のコミュニティ C にラベルをつけておく
     labeled_partitions = []
     for t, partition in enumerate(partitions):
         labeled_partitions.append([(t, community) for community in partition])
 
-    # 最初の時間のコミュニティはそのまま動的コミュニティとして登録
+    # t=0 の各コミュニティを初期化
     for t, community in labeled_partitions[0]:
         dynamic_communities.append([(t, community)])
 
-    # t=1 以降を順に処理
     for t in range(1, len(partitions)):
 
-        # 時刻tのコミュニティを順に比較
-        for i, (cur_timestamp, cur_community) in enumerate(labeled_partitions[t]):
-            is_similar_community_found = False
+        for _, (cur_timestamp, cur_community) in enumerate(labeled_partitions[t]):
+            best_similarity = 0.0
+            best_dc_index = -1
 
-            for dc in dynamic_communities:
-                # dc: [(1, [ts=1でそのdc_idに属するnode]), (2, [ts=2でそのdc_idに属するnode]), ... ] 
-                last_timestamp, last_com = dc[-1] # 1つ前のtimestampで、そのdc_idに該当するcommunity
+            for dc_index, dc in enumerate(dynamic_communities):
+                last_timestamp, last_community = dc[-1]
+                sim = __jaccard_similarity(last_community, cur_community)
 
-                sim = __jaccard_similarity(last_com, cur_community)
+                if sim >= theta and sim > best_similarity:
+                    best_similarity = sim
+                    best_dc_index = dc_index
 
-                if sim >= theta:
-                    # 1つ前のtimestampに類似のcommunityがあった場合
-                    is_similar_community_found = True
-                    dc.append((cur_timestamp, cur_community))
-
-            # 1つ前のtimestampの全てのcommunityを見ても類似のcommunityがなかった場合
-            if not is_similar_community_found:
+            if best_dc_index != -1:
+                dynamic_communities[best_dc_index].append((cur_timestamp, cur_community))
+            else:
                 dynamic_communities.append([(cur_timestamp, cur_community)])
 
     return dynamic_communities

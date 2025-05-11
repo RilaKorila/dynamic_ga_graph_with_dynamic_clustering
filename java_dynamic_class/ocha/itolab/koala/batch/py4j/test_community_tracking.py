@@ -175,7 +175,7 @@ if __name__ == "__main__":
         print(f"期待値: {expect_dynamic_communities[1]}")
         print(f"実際の値: {actual_dynamic_communities[1]}")
 
-        print("== テスト：timestamp 1,3 の コミュニティが似ているケース(厳しいマッチング) ==")
+    print("== テスト：timestamp 1,3 の コミュニティが似ているケース(厳しいマッチング) ==")
 
     same_community_partitions = [
         [ {"A", "B", "C"}],           # t = 0
@@ -204,3 +204,41 @@ if __name__ == "__main__":
         print(" ------- テストが通りませんでした: dynamic_communities[1] ------- ")
         print(f"期待値: {expect_dynamic_communities[1]}")
         print(f"実際の値: {actual_dynamic_communities[1]}")
+
+
+    print("== テスト：共通のcommunityが遠いidに存在するケース ==")
+
+    same_community_partitions = [
+        [ {"A", "B", "C"}, {"D", "E", "F"}, {"G", "H"}, {"I"} ],           # t = 0
+        [ {"D", "E", "F"}, {"G", "H"}, {"A", "B", "C"}, {"I"} ],           # t = 1
+        [ {"I"}, {"A", "B", "C"}, {"G", "H"}, {"D", "E", "F"}],           # t = 2   
+    ]
+
+    actual_dynamic_communities = track_communities(same_community_partitions)
+
+    expect_dynamic_communities = [
+        [(0, {"A", "B", "C"}), (1, {"A", "B", "C"}), (2, {"A", "B", "C"})],
+        [(0, {"D", "E", "F"}), (1, {"D", "E", "F"}), (2, {"D", "E", "F"})],
+        [(0, {"G", "H"}), (1, {"G", "H"}), (2, {"G", "H"})],
+        [(0, {"I"}), (1, {"I"}), (2, {"I"})]
+    ]
+
+    if len(actual_dynamic_communities) != len(expect_dynamic_communities):
+        print(" ------- テストが通りませんでした: dynamic_communitiesの長さ ------- ")
+        print(f"期待値: {len(expect_dynamic_communities)}")
+        print(f"実際の値: {len(actual_dynamic_communities)}")
+
+    if actual_dynamic_communities[0] != expect_dynamic_communities[0]:
+        print(" ------- テストが通りませんでした: dynamic_communities[0] ------- ")
+        print(f"期待値: {expect_dynamic_communities[0]}")
+        print(f"実際の値: {actual_dynamic_communities[0]}")
+    
+    if actual_dynamic_communities[1] != expect_dynamic_communities[1]:
+        print(" ------- テストが通りませんでした: dynamic_communities[1] ------- ")
+        print(f"期待値: {expect_dynamic_communities[1]}")
+        print(f"実際の値: {actual_dynamic_communities[1]}")
+
+    if actual_dynamic_communities[2] != expect_dynamic_communities[2]:
+        print(" ------- テストが通りませんでした: dynamic_communities[2] ------- ")
+        print(f"期待値: {expect_dynamic_communities[2]}")
+        print(f"実際の値: {actual_dynamic_communities[2]}")

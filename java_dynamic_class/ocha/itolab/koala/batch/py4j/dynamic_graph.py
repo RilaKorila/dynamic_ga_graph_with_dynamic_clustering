@@ -83,23 +83,20 @@ class DynamicGraph:
         """
         communities = list(self.communities_dict.values())
         # theta値は調整可能。値が大きいほど厳密なマッチングになる
-        all_dynamic_communities = track_communities(communities, theta=0.1)
+        all_dynamic_communities = track_communities(communities, theta=0.4)
 
         time_ordered_dynamic_communities_dict = {}
 
         # 各タイムスタンプに対して動的コミュニティを整理
-        for t, timestamp in enumerate(self.timestamps):
-            dynamic_communities = []
-            # 各動的コミュニティについて処理
+        for timestamp in self.timestamps:
+            dynamic_communities = [set() for _ in range(len(all_dynamic_communities))]
+
             for dynamic_community_id, community_list in enumerate(all_dynamic_communities):
-                # そのタイムスタンプでのコミュニティを探す
                 for time_idx, community in community_list:
-                    if timestamp == self.timestamps[time_idx]:  # インデックスで比較
-                        dynamic_communities.append(community)
-                    else:
-                        # コミュニティが見つからない場合は空のセットを追加
-                        dynamic_communities.append(set())
-            
+                    if timestamp == self.timestamps[time_idx]:
+                        dynamic_communities[dynamic_community_id] = community
+                        break
+
             time_ordered_dynamic_communities_dict[timestamp] = dynamic_communities
 
         return time_ordered_dynamic_communities_dict
