@@ -1,7 +1,8 @@
-from data_process.CitHepPh import get_graph_sequence_from_original_file, setup_data
+# from data_process.CitHepPh import get_graph_sequence_from_original_file, setup_data
+from data_process.facebook import get_graph_sequence_from_original_file, setup_data
 from community_detect import get_community_detection_result
 from community_tracking import track_communities
-from constants import CIT_HEP_PH_DIR_PATH
+from constants import FACEBOOK_DIR_PATH
 
 import networkx as nx
 
@@ -26,7 +27,7 @@ class DynamicGraph:
         # 動的コミュニティの追跡結果を保存
         self.time_ordered_dynamic_communities_dict = self.get_time_ordered_dynamic_communities_dict()
 
-        self.write_dynamic_communities_to_file(CIT_HEP_PH_DIR_PATH + "dynamic_communities/", self.time_ordered_dynamic_communities_dict)
+        self.write_dynamic_communities_to_file(FACEBOOK_DIR_PATH + "dynamic_communities/", self.time_ordered_dynamic_communities_dict)
 
     def create_summarized_graph(self, communities, timestamp):
         """
@@ -83,7 +84,7 @@ class DynamicGraph:
         """
         communities = list(self.communities_dict.values())
         # theta値は調整可能。値が大きいほど厳密なマッチングになる
-        all_dynamic_communities = track_communities(communities, theta=0.4)
+        all_dynamic_communities = track_communities(communities, theta=0.25)
 
         time_ordered_dynamic_communities_dict = {}
 
@@ -150,7 +151,7 @@ class DynamicGraph:
         """
         for timestamp in self.timestamps:
             # coms/配下のファイルと、dynamic_community_1.txt の内容を比較する
-            coms_file_path = CIT_HEP_PH_DIR_PATH + "coms/runDynamicModularity_Cit-HepPh_com_" + str(timestamp) + "_nodes.csv"
+            coms_file_path = FACEBOOK_DIR_PATH + "coms/runDynamicModularity_facebook_com_" + str(timestamp) + "_nodes.csv"
 
             # dynamic clusteringの結果
             dynamic_clustering_result_nodes_list= list()
@@ -165,7 +166,7 @@ class DynamicGraph:
 
             # community trackingの結果
             dc_nodes_list = list()
-            with open(CIT_HEP_PH_DIR_PATH + "dynamic_communities/dynamic_community_" + str(timestamp) + ".txt", "r") as f:
+            with open(FACEBOOK_DIR_PATH + "dynamic_communities/dynamic_community_" + str(timestamp) + ".txt", "r") as f:
                 dynamic_community_file_content = f.read()
                 for line in dynamic_community_file_content.split("\n"):
                     if line.strip() == "":

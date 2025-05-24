@@ -64,7 +64,8 @@ public class KoalaToSprawlter {
 
 	public static Graph getGraph(final double init[], final int timestamp) {
 		// Cit-HepPhのデータを読み込む
-		final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
+		// final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
+		final String infile = ResourceFile.FACEBOOK_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
 
 		// double List から LinLogLayoutクラスのinitialPosに変換
 		generateInitPositionList(init);

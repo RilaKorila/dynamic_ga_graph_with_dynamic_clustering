@@ -95,8 +95,10 @@ public class MeshGenerator {
 	public static void importVerticesFromFile(Mesh mesh, Graph graph, int timestamp) {
 		mesh.vertices.clear();
 
-		final String filename = ResourceFile.CIT_HEP_PH_COMMUNITY_DIR.path()
-				+ "runDynamicModularity_Cit-HepPh_com_" + timestamp + "_nodes.csv";
+		// final String filename = ResourceFile.CIT_HEP_PH_COMMUNITY_DIR.path()
+		// 		+ "runDynamicModularity_Cit-HepPh_com_" + timestamp + "_nodes.csv";
+		final String filename = ResourceFile.FACEBOOK_COMMUNITY_DIR.path()
+				+ "runDynamicModularity_facebook_com_" + timestamp + "_nodes.csv";
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line;

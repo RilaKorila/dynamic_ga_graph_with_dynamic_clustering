@@ -1,11 +1,12 @@
-from constants import CIT_HEP_PH_DIR_PATH
+from constants import FACEBOOK_DIR_PATH
 
 def get_community_detection_result(timestamp: int):
     """
     Get the community detection (DynaMo) result from the csv file.
     """
     # ファイルから読み込む
-    fname = f"{CIT_HEP_PH_DIR_PATH}coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
+    # fname = f"{FACEBOOK_DIR_PATH}coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
+    fname = f"{FACEBOOK_DIR_PATH}coms/runDynamicModularity_facebook_com_{timestamp}_nodes.csv"
 
     communities = []
     with open(fname, "r") as f:

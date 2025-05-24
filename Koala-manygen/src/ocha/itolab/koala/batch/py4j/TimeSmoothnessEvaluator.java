@@ -31,7 +31,8 @@ public class TimeSmoothnessEvaluator {
         assignDynamicCommunityId(previousGraph, previousDynamicCommunityIdMap);
 
         // 時間平滑性を計算する
-        return calculateTimeSmoothness(previousGraph, currentGraph);
+        // return calculateTimeSmoothness(previousGraph, currentGraph);
+        return calculateTimeSmoothnessWithMultipleMatches(previousGraph, currentGraph);
     }
 
     /**
@@ -105,6 +106,60 @@ public class TimeSmoothnessEvaluator {
         // Cursorは1つ前のタイムスタンプのグラフのノード数と現在のタイムスタンプのグラフのノード数の比率を用いて、計算しようとしていたので必要かどうかを確認する。
         return totalDistance;
     }
+
+    /**
+     * 時間平滑性を計算する。ただし、同じdynamic_community_idを持つメタノード同士だけでなく、Jaccard係数が閾値以上のメタノード同士も考慮する。
+     * ("類似のmetanode"が 1:1 ではなく、1:n の関係になる)
+     * 
+     * @param previousGraph 1つ前のタイムスタンプのグラフ
+     * @param currentGraph  現在のタイムスタンプのグラフ
+     * @return 時間平滑性
+     */
+
+     private static double calculateTimeSmoothnessWithMultipleMatches(final Graph previousGraph, final Graph currentGraph) {
+        double totalDistance = 0.0;
+        double similarityThreshold = 0.25; // Jaccard係数の閾値
+
+        for (Vertex currentVertex : currentGraph.mesh.getVertices()) {
+            for (Vertex previousVertex : previousGraph.mesh.getVertices()) {
+
+                // metanodeに属するnodeの集合同士でJaccard係数を計算し、閾値以上であれば距離を計算する
+                List<Integer> currentNodeIds = currentVertex.getNodes().stream()
+                        .map(Node::getId).sorted().collect(Collectors.toList());
+                List<Integer> previousNodeIds = previousVertex.getNodes().stream()
+                        .map(Node::getId).sorted().collect(Collectors.toList());
+
+                if (calculateJaccardCoefficient(currentNodeIds, previousNodeIds) > similarityThreshold) {
+                    // 大きいmetanodeほどインパクトが大きいので、metanodeに属するnode数を移動距離に乗算する
+                    final double penalty = calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(),
+                            10.0) * currentVertex.getNodeNum();
+                    totalDistance += penalty;
+                }
+            }
+        }
+
+        return totalDistance;
+    }
+
+    /**
+     * 与えられた2つのノードリストのJaccard係数を計算する
+     * @param nodes1
+     * @param nodes2
+     * @return Jaccard係数
+     */
+    private static double calculateJaccardCoefficient(final List<Integer> nodes1, final List<Integer> nodes2) {
+        if (nodes1.isEmpty() || nodes2.isEmpty()) {
+            return 0.0;
+        }
+
+        // 共通の要素数を計算
+        long intersectionSize = nodes1.stream().filter(nodes2::contains).count();
+        // 和集合のサイズを計算
+        long unionSize = nodes1.size() + nodes2.size() - intersectionSize;
+
+        return (double) intersectionSize / unionSize;
+    }   
+
 
     /**
      * 2点間のユークリッド距離を計算する

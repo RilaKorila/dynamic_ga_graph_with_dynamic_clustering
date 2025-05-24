@@ -36,7 +36,8 @@ def count_nodes_per_id(file_path):
 
 
 if __name__ == "__main__":
-    base_url = "./data/Cit-HepPh/dynamic_communities/"
+    # base_url = "./data/Cit-HepPh/dynamic_communities/"
+    base_url = "./data/facebook/dynamic_communities/"
 
     result = defaultdict(list)
     for i in range(1, 4):
