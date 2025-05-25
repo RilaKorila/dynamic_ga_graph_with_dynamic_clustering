@@ -1,4 +1,4 @@
-from constants import FACEBOOK_DIR_PATH
+from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
 from collections import defaultdict
 
 ### facebookのデータを加工するメソッド
@@ -19,7 +19,7 @@ def get_graph_sequence_from_original_file(timestamps):
     graph_sequence_dict= {}
     
     for timestamp in timestamps:
-        fname = f"{FACEBOOK_DIR_PATH}ntwk/{timestamp}"
+        fname = f"{DATA_DIR_PATH}ntwk/{timestamp}"
 
         nodes = set()
         edges = set()
@@ -56,7 +56,7 @@ def setup_data(timestamps):
         __write_connectivity(nodes, edges, timestamp)
 
 def __get_edges(timestamp):
-    fname = f"{FACEBOOK_DIR_PATH}ntwk/{timestamp}"
+    fname = f"{DATA_DIR_PATH}ntwk/{timestamp}"
 
     edges = set()
     with open(fname, "r") as f:
@@ -68,7 +68,7 @@ def __get_edges(timestamp):
     return edges
 
 def __get_nodes(timestamp):
-    fname = f"{FACEBOOK_DIR_PATH}ntwk/{timestamp}"
+    fname = f"{DATA_DIR_PATH}ntwk/{timestamp}"
 
     nodes = set()
     with open(fname, "r") as f:
@@ -86,8 +86,8 @@ def __write_filtered_coms(timestamp, alive_nodes):
     _coms_{n}_nodes.csv では、そのtimestampでは生きていないノードIDも含んでしまっているため、
     ntwk/配下のデータを参照して、そのtimestampで生きているノードだけを抽出し、結果をcsvファイルとして出力。
     """
-    com_fname = f"{FACEBOOK_DIR_PATH}coms/runDynamicModularity_facebook_com_{timestamp}_nodes.csv"
-    filtered_com_fname = f"{FACEBOOK_DIR_PATH}filtered_coms/runDynamicModularity_facebook_com_{timestamp}_nodes.csv"
+    com_fname = f"{DATA_DIR_PATH}coms/runDynamicModularity_facebook_com_{timestamp}_nodes.csv"
+    filtered_com_fname = f"{DATA_DIR_PATH}filtered_coms/runDynamicModularity_facebook_com_{timestamp}_nodes.csv"
 
     # communityを取得
     com_nodes = {}
@@ -116,7 +116,7 @@ def __write_connectivity(nodes, edges, timestamp):
     outgoing_nodes
     incoming_nodes
     """
-    fname = f"{FACEBOOK_DIR_PATH}connectivity_timestamp_{timestamp}.csv"
+    fname = f"{DATA_DIR_PATH}connectivity_timestamp_{timestamp}.csv"
     # 各ノードの外向き・内向きエッジを管理する辞書を作成
     outgoing_edges = defaultdict(list)
     incoming_edges = defaultdict(list)

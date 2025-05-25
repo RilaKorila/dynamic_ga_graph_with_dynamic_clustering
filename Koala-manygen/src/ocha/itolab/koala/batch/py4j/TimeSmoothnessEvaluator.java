@@ -31,8 +31,8 @@ public class TimeSmoothnessEvaluator {
         assignDynamicCommunityId(previousGraph, previousDynamicCommunityIdMap);
 
         // 時間平滑性を計算する
-        // return calculateTimeSmoothness(previousGraph, currentGraph);
-        return calculateTimeSmoothnessWithMultipleMatches(previousGraph, currentGraph);
+        return calculateTimeSmoothness(previousGraph, currentGraph);
+        // return calculateTimeSmoothnessWithMultipleMatches(previousGraph, currentGraph);
     }
 
     /**
@@ -115,29 +115,48 @@ public class TimeSmoothnessEvaluator {
      * @param currentGraph  現在のタイムスタンプのグラフ
      * @return 時間平滑性
      */
-
      private static double calculateTimeSmoothnessWithMultipleMatches(final Graph previousGraph, final Graph currentGraph) {
         double totalDistance = 0.0;
-        double similarityThreshold = 0.25; // Jaccard係数の閾値
-
+        final double similarityThreshold = 0.25; // Jaccard係数の閾値
+    
+        // キャッシュ用のMapを用意
+        final HashMap<String, Double> jaccardCache = new HashMap<>();
+        final HashMap<String, Double> distanceCache = new HashMap<>();
+    
         for (Vertex currentVertex : currentGraph.mesh.getVertices()) {
             for (Vertex previousVertex : previousGraph.mesh.getVertices()) {
-
-                // metanodeに属するnodeの集合同士でJaccard係数を計算し、閾値以上であれば距離を計算する
-                List<Integer> currentNodeIds = currentVertex.getNodes().stream()
-                        .map(Node::getId).sorted().collect(Collectors.toList());
-                List<Integer> previousNodeIds = previousVertex.getNodes().stream()
-                        .map(Node::getId).sorted().collect(Collectors.toList());
-
-                if (calculateJaccardCoefficient(currentNodeIds, previousNodeIds) > similarityThreshold) {
-                    // 大きいmetanodeほどインパクトが大きいので、metanodeに属するnode数を移動距離に乗算する
-                    final double penalty = calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(),
-                            10.0) * currentVertex.getNodeNum();
+                final String vertexPairKey = currentVertex.getId() + "-" + previousVertex.getId();
+    
+                // Jaccard係数をキャッシュから取得または計算
+                double jaccardCoefficient;
+                if (jaccardCache.containsKey(vertexPairKey)) {
+                    jaccardCoefficient = jaccardCache.get(vertexPairKey);
+                } else {
+                    List<Integer> currentNodeIds = currentVertex.getNodes().stream()
+                            .map(Node::getId).sorted().collect(Collectors.toList());
+                    List<Integer> previousNodeIds = previousVertex.getNodes().stream()
+                            .map(Node::getId).sorted().collect(Collectors.toList());
+                    jaccardCoefficient = calculateJaccardCoefficient(currentNodeIds, previousNodeIds);
+                    System.out.println("Cacheに保存: " + vertexPairKey + " Jaccard係数: " + jaccardCoefficient);
+                    jaccardCache.put(vertexPairKey, jaccardCoefficient);
+                }
+    
+                // Jaccard係数が閾値以上の場合のみ距離を計算
+                if (jaccardCoefficient > similarityThreshold) {
+                    double penalty;
+                    if (distanceCache.containsKey(vertexPairKey)) {
+                        penalty = distanceCache.get(vertexPairKey);
+                    } else {
+                        penalty = calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(), 10.0)
+                                * currentVertex.getNodeNum();
+                        distanceCache.put(vertexPairKey, penalty);
+                        System.out.println("Cacheに保存: " + vertexPairKey + " 距離: " + penalty);
+                    }
                     totalDistance += penalty;
                 }
             }
         }
-
+    
         return totalDistance;
     }
 

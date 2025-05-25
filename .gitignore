@@ -21,5 +21,6 @@ ResourceFile.class
 data/community_csv/coauthors_community.csv
 data/Cit-HepPh/*
 data/facebook/*
+data/timesmoothnessSample/*
 
 Koala-manygen/layoutsToEvaluate

@@ -16,8 +16,7 @@ echo "どのtimestampをhtmlに変換する?? : "
 read target_timestamp # 標準入力を変数に格納
 
 ## 出力する世代を指定
-echo "何世代目をhtmlに変換する?? : "
-read target_generation # 標準入力を変数に格納
+target_generation=0 # FIXME 世代を指定
 
 # 結果格納用のフォルダを作成
 current_time=$(date "+%Y%m%d%H%M")
@@ -43,7 +42,8 @@ source streamlit_csv/bin/activate
 # dynamic_graphの時は、dynamic_community_idも選択可能
 node_color="dynamic_community_id" 
 node_size="same"
-python createHtmls.py ${csv_folder} ${html_folder} ${node_color} ${node_size} ${target_generation} ${target_timestamp}
+dataset_name="timesmoothnessSample"
+python createHtmls.py ${csv_folder} ${html_folder} ${node_color} ${node_size} ${target_generation} ${target_timestamp} ${dataset_name}
 
 # 環境を閉じる
 deactivate

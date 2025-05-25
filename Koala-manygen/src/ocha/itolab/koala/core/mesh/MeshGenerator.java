@@ -1,6 +1,6 @@
 package ocha.itolab.koala.core.mesh;
 
-import ocha.itolab.koala.constants.ResourceFile;
+import ocha.itolab.koala.constants.Dataset;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -16,6 +16,7 @@ public class MeshGenerator {
 	static final int CLUSTERING_LINLOG = 2;
 	static final int CLUSTERING_IMPORT = 3;
 	static int clusteringMode = CLUSTERING_IMPORT;
+	static Dataset dataset = Dataset.TIMESMOOTHNESS_SAMPLE;
 
 	private static String getClusteringModeName(int mode) { // デバッグ用のメソッド
 		switch (mode) {
@@ -95,10 +96,8 @@ public class MeshGenerator {
 	public static void importVerticesFromFile(Mesh mesh, Graph graph, int timestamp) {
 		mesh.vertices.clear();
 
-		// final String filename = ResourceFile.CIT_HEP_PH_COMMUNITY_DIR.path()
-		// 		+ "runDynamicModularity_Cit-HepPh_com_" + timestamp + "_nodes.csv";
-		final String filename = ResourceFile.FACEBOOK_COMMUNITY_DIR.path()
-				+ "runDynamicModularity_facebook_com_" + timestamp + "_nodes.csv";
+		final String filename = dataset.getComsPath()
+				+ "runDynamicModularity_" + dataset.getName() +"_com_" + timestamp + "_nodes.csv";
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line;

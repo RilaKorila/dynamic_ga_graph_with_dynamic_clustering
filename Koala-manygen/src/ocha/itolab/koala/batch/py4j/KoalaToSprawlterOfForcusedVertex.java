@@ -3,6 +3,7 @@ package ocha.itolab.koala.batch.py4j;
 import java.io.File;
 import java.util.ArrayList;
 
+import ocha.itolab.koala.constants.Dataset;
 import ocha.itolab.koala.constants.ResourceFile;
 import ocha.itolab.koala.core.data.*;
 import ocha.itolab.koala.core.forcedirected.LinLogLayout;
@@ -17,14 +18,14 @@ public class KoalaToSprawlterOfForcusedVertex {
 	static Graph graph;
 	static int SMOOTHING_ITERATION = 100;
 	static int NUM_PER_GENERATION = 20; // 個体数
+	static Dataset dataset = Dataset.CIT_HEP_PH;
 
 	/**
 	 * Execute Koala and Sprawlter
 	 */
 	public static Map<String, Double> execute(final double init[], final int timestamp) {
 		// Cit-HepPhのデータを読み込む
-		// final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
-		final String infile = ResourceFile.FACEBOOK_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
+		final String infile = dataset.getDataDirPath() + "connectivity_timestamp_" + timestamp + ".csv";
 
 		// double List から LinLogLayoutクラスのinitialPosに変換
 		generateInitPositionList(init);
@@ -81,9 +82,8 @@ public class KoalaToSprawlterOfForcusedVertex {
 		final String dirName = createDirectory(ResourceFile.RESULT.path() + "/" + timestamp + "/");
 		final String filename = dirName + "/layout" + generation + "-" + id + ".csv";
 
-		// Cit-HepPhのデータを読み込む
-		// final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
-		final String infile = ResourceFile.FACEBOOK_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
+		// データを読み込む
+		final String infile = dataset.getDataDirPath() + "connectivity_timestamp_" + timestamp + ".csv";
 
 		// double List から LinLogLayoutクラスのinitialPosに変換
 		generateInitPositionList(init);

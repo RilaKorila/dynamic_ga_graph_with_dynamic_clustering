@@ -3,6 +3,8 @@ package ocha.itolab.koala.batch.py4j;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import ocha.itolab.koala.constants.Dataset;
 import ocha.itolab.koala.constants.ResourceFile;
 import ocha.itolab.koala.core.data.*;
 import ocha.itolab.koala.core.forcedirected.LinLogLayout;
@@ -18,6 +20,7 @@ public class KoalaToSprawlter {
 	static Graph graph;
 	static int SMOOTHING_ITERATION = 100;
 	static int NUM_PER_GENERATION = 20;
+	static Dataset dataset = Dataset.TIMESMOOTHNESS_SAMPLE;
 
 	static double NN_RATIO = 1.0, NE_RATIO = 1.0, EE_RATIO = 0.5;
 
@@ -63,9 +66,8 @@ public class KoalaToSprawlter {
 	}
 
 	public static Graph getGraph(final double init[], final int timestamp) {
-		// Cit-HepPhのデータを読み込む
-		// final String infile = ResourceFile.CIT_HEP_PH_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
-		final String infile = ResourceFile.FACEBOOK_DATA_DIR.path() + "connectivity_timestamp_" + timestamp + ".csv";
+		// データを読み込む
+		final String infile = dataset.getDataDirPath() + "connectivity_timestamp_" + timestamp + ".csv";
 
 		// double List から LinLogLayoutクラスのinitialPosに変換
 		generateInitPositionList(init);

@@ -1,7 +1,7 @@
 from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATASET_DIR_PATH
 from collections import defaultdict
 
-### Cit-HepPhのデータを加工するメソッド
+### timesmoothnessSampleのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
 def get_graph_sequence_from_original_file(timestamps):
     """
@@ -40,7 +40,7 @@ def get_graph_sequence_from_original_file(timestamps):
 
 def setup_data(timestamps):
     """
-    Cit-HepPhのデータを加工し、必要なファイル群を作成する。
+    データを加工し、必要なファイル群を作成する。
     """
     print("=========== setup_data ===========")
     

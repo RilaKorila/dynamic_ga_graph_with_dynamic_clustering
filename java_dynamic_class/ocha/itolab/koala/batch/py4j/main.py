@@ -129,7 +129,7 @@ start = time.perf_counter() # 計測開始
 
 def optimize_layouts():
     # timestamps = [ i for i in range(1, 4)]
-    timestamps = [1, 2, 3]
+    timestamps = [1, 2]
     results = []
     previous_best_layouts = None
     
