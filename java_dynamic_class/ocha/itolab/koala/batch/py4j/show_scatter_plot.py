@@ -146,11 +146,6 @@ if __name__ == "__main__":
 
     input_txt_path = sys.argv[1]
     output_dir = sys.argv[2]
-    os.makedirs(output_dir, exist_ok=True)
-    os.chdir(output_dir)
-
-
-    dir_name = __create_directory(PNG_PATH + f"{output_dir}")        
 
     generations = load_generations_from_file(PNG_PATH + input_txt_path)
-    plot_generation_scatters(generations, dir_name)
+    plot_generation_scatters(generations, PNG_PATH + f"{output_dir}")
