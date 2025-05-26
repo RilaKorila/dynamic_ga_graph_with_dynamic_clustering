@@ -31,8 +31,7 @@ public class TimeSmoothnessEvaluator {
         assignDynamicCommunityId(previousGraph, previousDynamicCommunityIdMap);
 
         // 時間平滑性を計算する
-        return calculateTimeSmoothness(previousGraph, currentGraph);
-        // return calculateTimeSmoothnessWithMultipleMatches(previousGraph, currentGraph);
+        return calculateTimeSmoothnessWithMultipleMatches(previousGraph, currentGraph);
     }
 
     /**
@@ -115,7 +114,8 @@ public class TimeSmoothnessEvaluator {
      * @param currentGraph  現在のタイムスタンプのグラフ
      * @return 時間平滑性
      */
-     private static double calculateTimeSmoothnessWithMultipleMatches(final Graph previousGraph, final Graph currentGraph) {
+    private static double calculateTimeSmoothnessWithMultipleMatches(final Graph previousGraph,
+            final Graph currentGraph) {
         double totalDistance = 0.0;
         final double similarityThreshold = 0.25; // Jaccard係数の閾値
     
@@ -137,7 +137,6 @@ public class TimeSmoothnessEvaluator {
                     List<Integer> previousNodeIds = previousVertex.getNodes().stream()
                             .map(Node::getId).sorted().collect(Collectors.toList());
                     jaccardCoefficient = calculateJaccardCoefficient(currentNodeIds, previousNodeIds);
-                    System.out.println("Cacheに保存: " + vertexPairKey + " Jaccard係数: " + jaccardCoefficient);
                     jaccardCache.put(vertexPairKey, jaccardCoefficient);
                 }
     
@@ -147,10 +146,9 @@ public class TimeSmoothnessEvaluator {
                     if (distanceCache.containsKey(vertexPairKey)) {
                         penalty = distanceCache.get(vertexPairKey);
                     } else {
-                        penalty = calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(), 10.0)
+                        penalty = calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(), 1)
                                 * currentVertex.getNodeNum();
                         distanceCache.put(vertexPairKey, penalty);
-                        System.out.println("Cacheに保存: " + vertexPairKey + " 距離: " + penalty);
                     }
                     totalDistance += penalty;
                 }
@@ -192,7 +190,9 @@ public class TimeSmoothnessEvaluator {
         double dx = Math.abs(p1[0] - p2[0]) * scale;
         double dy = Math.abs(p1[1] - p2[1]) * scale;
 
-        return Math.sqrt(dx * dx + dy * dy);
+        double distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 1e-6) distance = 0.0;
+        return distance;
     }
 
 }

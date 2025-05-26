@@ -2,7 +2,6 @@ package ocha.itolab.koala.batch.py4j;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 import ocha.itolab.koala.constants.Dataset;
 import ocha.itolab.koala.constants.ResourceFile;
@@ -20,7 +19,7 @@ public class KoalaToSprawlter {
 	static Graph graph;
 	static int SMOOTHING_ITERATION = 100;
 	static int NUM_PER_GENERATION = 20;
-	static Dataset dataset = Dataset.TIMESMOOTHNESS_SAMPLE;
+	static Dataset dataset = Dataset.FACEBOOK;
 
 	static double NN_RATIO = 1.0, NE_RATIO = 1.0, EE_RATIO = 0.5;
 
@@ -98,7 +97,7 @@ public class KoalaToSprawlter {
 		LinLogLayout.setInitialPositionList(poslist);
 	}
 
-	static void writeLayoutFile(double init[], int timestamp, final String fname) {
+	static void writeLayoutFile(final double init[], final int timestamp, final String fname) {
 		final String dirName = createDirectory(ResourceFile.RESULT.path() + "/" + timestamp + "/");
 		final String filePath = dirName + fname;
 
