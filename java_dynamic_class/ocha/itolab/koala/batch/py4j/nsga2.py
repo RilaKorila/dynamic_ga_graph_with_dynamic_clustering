@@ -26,6 +26,7 @@ class NSGA2:
 
         # 適合度を最小化することで最適化されるような適合度クラスの作成
         if "FitnessMin" not in creator.__dict__:
+            # creator.create("FitnessMin", base.Fitness, weights=(-1.0,)) 検証用
             creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0))
 
         # 個体クラスIndividualを作成
@@ -173,7 +174,7 @@ class NSGA2:
         self.setting()
 
         # NDIMを2倍に変更（2つのレイアウト分）
-        NGEN = 20  # 繰り返し世代数・Experiment 1-S
+        NGEN = 40  # 繰り返し世代数・Experiment 1-S
         MU = self.NDIM  # 集団内の個体数
         CXPB = 0.9  # 交叉率
 
@@ -203,13 +204,11 @@ class NSGA2:
             [list(self.pop_init[i].fitness.values) for i in range(len(self.pop_init))]
         )
 
-        # Hyper Volume算出用のreference point
+        # self.ref_hv = [max(fitnesses_init[:, 0])] 検証用
         self.ref_hv = [max(fitnesses_init[:, 0]), max(fitnesses_init[:, 1]), max(fitnesses_init[:, 2])]
 
         # 初期レイアウトをcsv出力
-        self.write_layout_file_func(0, pop, self.timestamp)
-        if self.has_previous_layout:
-            self.write_layout_file_func(0, pop, self.previous_timestamp, is_previous=True)
+        self.write_layout_files(0, pop)
 
         record = stats.compile(pop)
         logbook.record(gen=0, evals=len(invalid_ind), **record)
@@ -281,9 +280,7 @@ class NSGA2:
         self.write_hv(PNG_PATH + self.hv_fname, gen, hv)
 
         # 最終的に残った遺伝子を全てファイル出力
-        self.write_layout_file_func(gen, pop, self.timestamp)  
-        if self.has_previous_layout:
-            self.write_layout_file_func(gen, pop, self.previous_timestamp, is_previous=True)
+        self.write_layout_files(gen, pop)
 
         # csv 出力
         self.history_evaluation_stats.output_csv()
@@ -328,6 +325,7 @@ class NSGA2:
             time_smoothness = current_fitness[2]
 
             ind.fitness.values = (sprawl, clutter, time_smoothness)
+            # ind.fitness.values = (time_smoothness,) # 検証用
 
     def write_log(self, path, logbook):
         """
@@ -444,3 +442,28 @@ class NSGA2:
 
         # mutate メソッドは tuple を返すので、このメソッドも揃える
         return ind,
+
+    def write_layout_files(self, generation, pop):
+        """
+        その世代の遺伝子情報をまとめて受け取り、それぞれに対してcsvに出力する関数を呼び出す
+
+        Args:
+            generation(int): 世代番号
+            pop(float[][]): 遺伝子を表現する配列の配列
+
+        Returns:
+            なし
+        """
+        for id, ind in enumerate(pop):
+            # 現在のレイアウトを出力
+            fname = f"layout{generation}-{id}.csv"
+            ind_current = ind[:self.current_layout_gene_len]
+            self.write_layout_file_func(ind_current, self.timestamp, fname)
+
+            # 過去のレイアウトがある場合は、過去のレイアウトも出力
+            if self.has_previous_layout:
+                fname = f"previous_layout{generation}-{id}.csv"
+                ind_previous = ind[self.current_layout_gene_len:]
+                self.write_layout_file_func(ind_previous, self.previous_timestamp, fname)
+
+        

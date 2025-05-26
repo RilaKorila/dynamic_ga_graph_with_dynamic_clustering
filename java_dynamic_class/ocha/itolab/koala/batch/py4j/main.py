@@ -47,25 +47,7 @@ def get_evaluation_results(generation, id, previous_plist, current_plist, timest
 
     return res
 
-def write_layout_file(generation, pop, timestamp, is_previous = False):
-    """
-    その世代の遺伝子情報をまとめて受け取り、それぞれに対してcsvに出力する関数を呼び出す
-
-     Args:
-        generation(int): 世代番号
-        pop(float[][]): 遺伝子を表現する配列を持つ配列
-        timestamp(int): タイムスタンプ
-        is_previous(boolean): 過去のレイアウトがどうか
-
-    Returns:
-        なし
-    """
-    for id, ind in enumerate(pop):
-        fname = ("previous_layout"  if is_previous else "layout") + f"{generation}-{id}.csv"
-        __call_java_file_writer(ind, timestamp, fname)
-
-
-def __call_java_file_writer(individual, timestamp, fname):
+def write_layout_file(individual, timestamp, fname):
     """
     与えられた遺伝子情報を初期値としてKoalaのレイアウトを作成し、レイアウト詳細をcsvに出力する
 
@@ -129,7 +111,7 @@ start = time.perf_counter() # 計測開始
 
 def optimize_layouts():
     # timestamps = [ i for i in range(1, 4)]
-    timestamps = [1, 2]
+    timestamps = [1, 2, 3]
     results = []
     previous_best_layouts = None
     
@@ -180,6 +162,7 @@ def select_best_layouts(population, n=5):
         sprawl, clutter, time_smoothness = ind.fitness.values
         # sprawlとclutterの重み付け和を計算（重みは調整可能）
         weighted_score = 0.3 * sprawl + 0.3 * clutter + 0.4 * time_smoothness
+        # weighted_score = time_smoothness 検証用
         weighted_scores.append((ind, weighted_score))
     
     # スコアでソート
