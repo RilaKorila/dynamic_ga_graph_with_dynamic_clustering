@@ -1,14 +1,16 @@
-# from data_process.CitHepPh import get_graph_sequence_from_original_file, setup_data
-# from data_process.facebook import get_graph_sequence_from_original_file, setup_data
-from data_process.timesmoothnessSample import get_graph_sequence_from_original_file, setup_data
 from community_detect import get_community_detection_result
 from community_tracking import track_communities
-from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
-
+from data_process.CitHepPh import get_graph_sequence_from_original_file, setup_data, load_graph_info
+# from data_process.facebook import get_graph_sequence_from_original_file, setup_data, load_graph_info
+# from data_process.timesmoothnessSample import get_graph_sequence_from_original_file, setup_data, load_graph_info
+from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
+# from constants import FACEBOOK_DIR_PATH as DATA_DIR_PATH
+# from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
 import networkx as nx
 
-DATASET_NAME = "timesmoothnessSample"  # データセット名を指定。使用するデータに応じて変更すること。
-# DATASET_NAME = "Cit-HepPh"  # データセット名を指定。使用するデータに応じて変更すること。
+DATASET_NAME = "Cit-HepPh"
+# DATASET_NAME = "facebook"
+# DATASET_NAME = "timesmoothnessSample"
 
 #### DynamicGraphクラス ####
 class DynamicGraph:
@@ -32,6 +34,10 @@ class DynamicGraph:
         self.time_ordered_dynamic_communities_dict = self.get_time_ordered_dynamic_communities_dict()
 
         self.write_dynamic_communities_to_file(DATA_DIR_PATH + "dynamic_communities/", self.time_ordered_dynamic_communities_dict)
+
+        # グラフを構成するnode情報を読み込む
+        self.graph_info_dict = {timestamp : load_graph_info(timestamp) for timestamp in self.timestamps}
+
 
     def create_summarized_graph(self, communities, timestamp):
         """
@@ -132,6 +138,28 @@ class DynamicGraph:
 
     def get_communities(self, timestamp):
         return self.communities_dict[timestamp]
+
+    def get_graph_info(self, timestamp):
+        return self.graph_info_dict[timestamp]
+
+    def get_similar_cluster_dict(self, timestamp, previous_timestamp):
+        JACCARD_THRESHOLD = 0.25
+        def __calc_jaccard_similarity(c1, c2) -> float:
+            return len(c1 & c2) / len(c1 | c2) if c1 | c2 else 0.0
+        
+        cluster_similarity_dict = {}
+        current_graph_info = self.graph_info_dict[timestamp]
+        previous_graph_info = self.graph_info_dict[previous_timestamp]
+
+        current_cluster_ids = list(current_graph_info.keys())
+        previous_cluster_ids = list(previous_graph_info.keys())
+
+        for current_cluster_id in current_cluster_ids:
+            for previous_cluster_id in previous_cluster_ids:
+                if __calc_jaccard_similarity(current_graph_info[current_cluster_id], previous_graph_info[previous_cluster_id]) > JACCARD_THRESHOLD:
+                    cluster_similarity_dict[current_cluster_id] = previous_cluster_id
+
+        return cluster_similarity_dict
 
     def write_dynamic_communities_to_file(self, file_path, time_ordered_dynamic_communities_dict):
         # 各タイムスタンプごとに動的コミュニティファイルを作成

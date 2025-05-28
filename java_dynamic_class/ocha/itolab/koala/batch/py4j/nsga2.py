@@ -6,7 +6,6 @@ from constants import PNG_PATH, SUPERGRAPH_PNG_PATH
 from deap import base, creator, tools
 from deap.benchmarks.tools import hypervolume
 from history_evaluation_stats import HistoryEvaluationStats
-from my_mutation import muSmall
 from layouts import define_layout, visualize_summarized_graph
 
 class NSGA2:
@@ -20,7 +19,8 @@ class NSGA2:
         # 遺伝子が取り得る値の範囲を指定
         self.MIN_COORDINATE, self.MAX_COORDINATE = -10.0, 10.0
         # 1つの個体内の遺伝子の数を指定 (4の倍数でないとselTournamentDCDでエラー)
-        self.NDIM = 20  # Experiment 1-S
+        self.NDIM = 20  # 1世代あたりの個体数 Experiment 1-S
+        self.NGEN = 40  # 繰り返し世代数・Experiment 1-S
 
         self.layout_counter = 0
 
@@ -82,6 +82,10 @@ class NSGA2:
         self.communities = dynamic_graph.get_communities(timestamp)
         self.summarized_graph = dynamic_graph.get_summarized_graph(timestamp)
         self.dynamic_graph = dynamic_graph
+        self.graph_info = dynamic_graph.get_graph_info(timestamp)
+
+        if self.has_previous_layout:
+            self.similar_cluster_pos_dict = dynamic_graph.get_similar_cluster_dict(self.timestamp, self.previous_timestamp)
 
         # 遺伝子長の計算
         self.current_layout_gene_len = len(self.communities) * 2  # 現在のレイアウトの遺伝子長
@@ -157,6 +161,22 @@ class NSGA2:
         # 前のタイムスタンプのレイアウトがある場合は、それと組み合わせる
         # TODO previous_best_layoutsの数は調整できるようにしたい
         previous_layout = random.choice(self.previous_best_layouts)[:] if self.has_previous_layout else []
+
+        if self.has_previous_layout:
+            # 前のタイムスタンプのレイアウトがある場合、類似クラスタは位置をそのまま使用する
+            cluster_id_list = list(self.graph_info.keys())
+            for cluster_id in cluster_id_list:
+                if self.similar_cluster_pos_dict.get(cluster_id):
+                    # 類似のclusterが存在する場合
+                    previous_similar_cluster_id = self.similar_cluster_pos_dict[cluster_id]
+                
+                    previous_pos_x = previous_layout[int(previous_similar_cluster_id) * 2]
+                    previous_pos_y = previous_layout[int(previous_similar_cluster_id) * 2 + 1]
+
+                    # current_layout_list のなかで previous_layout_of_similar_clusters に含まれているものはswap
+                    current_layout_list[int(cluster_id) * 2] = previous_pos_x
+                    current_layout_list[int(cluster_id) * 2 + 1] = previous_pos_y
+
         # 現在のレイアウトと前のレイアウトを結合（現在が先）
         combined_layout = current_layout_list.copy()
         combined_layout.extend(previous_layout)
@@ -174,7 +194,6 @@ class NSGA2:
         self.setting()
 
         # NDIMを2倍に変更（2つのレイアウト分）
-        NGEN = 40  # 繰り返し世代数・Experiment 1-S
         MU = self.NDIM  # 集団内の個体数
         CXPB = 0.9  # 交叉率
 
@@ -217,7 +236,7 @@ class NSGA2:
         self.write_log(PNG_PATH + fname, logbook)
 
         # 最適計算の実行
-        for gen in range(1, NGEN):
+        for gen in range(1, self.NGEN):
             # 終了条件をhvに変える → while条件へ
             # gen = 1
             # hv = 0.0
@@ -283,7 +302,8 @@ class NSGA2:
         self.write_layout_files(gen, pop)
 
         # csv 出力
-        self.history_evaluation_stats.output_csv()
+        self.history_evaluation_stats.output_csv(self.NGEN, self.NDIM)
+
 
         return pop, self.pop_init, logbook
 

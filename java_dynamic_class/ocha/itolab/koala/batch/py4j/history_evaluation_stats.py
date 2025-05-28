@@ -222,21 +222,23 @@ class HistoryEvaluationStats:
         ]
         StatsCsvWriter.write_row(row)
 
-    def output_csv(self):
+    def output_csv(self, ngen, population_length):
         """
         過去のNN, NE, EEの全てをcsvに出力する。
         ただし、最終世代の最大値・最小値で正規化することとする
-        """
-        self.NGEN = 20  # 繰り返し世代数 ・ Experiment 1-S
-        self.population_length = 20  # 1世代あたりの個体数 ・ Experiment 1-S
 
-        for gen in range(self.NGEN):
-            for i in range(self.population_length):
-                nnpen = self.nnpens[gen * self.population_length + i]
-                nepen = self.nepens[gen * self.population_length + i]
-                eepen = self.eepens[gen * self.population_length + i]
-                sprawl = self.sprawls[gen * self.population_length + i]
-                time_smoothness = self.time_smoothnesses[gen * self.population_length + i]
+        inputs:
+            ngen (int): 繰り返し世代数
+            population_length (int): 1世代あたりの個体数
+        """
+
+        for gen in range(ngen):
+            for i in range(population_length):
+                nnpen = self.nnpens[gen * population_length + i]
+                nepen = self.nepens[gen * population_length + i]
+                eepen = self.eepens[gen * population_length + i]
+                sprawl = self.sprawls[gen * population_length + i]
+                time_smoothness = self.time_smoothnesses[gen * population_length + i]
                 clutter = self.__calc_normalized_clutter(nnpen, nepen, eepen)
 
                 ClutterSprawlCsvWriter.write_row([gen, clutter, sprawl, time_smoothness])

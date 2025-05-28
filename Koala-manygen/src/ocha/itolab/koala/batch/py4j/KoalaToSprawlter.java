@@ -18,8 +18,7 @@ public class KoalaToSprawlter {
 	// Cit-HepPhのデータを読み込む
 	static Graph graph;
 	static int SMOOTHING_ITERATION = 100;
-	static int NUM_PER_GENERATION = 20;
-	static Dataset dataset = Dataset.FACEBOOK;
+	static Dataset dataset = Dataset.CIT_HEP_PH; // データ変更
 
 	static double NN_RATIO = 1.0, NE_RATIO = 1.0, EE_RATIO = 0.5;
 

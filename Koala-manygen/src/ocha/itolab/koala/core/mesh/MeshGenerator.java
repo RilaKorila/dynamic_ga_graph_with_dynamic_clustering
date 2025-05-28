@@ -16,7 +16,7 @@ public class MeshGenerator {
 	static final int CLUSTERING_LINLOG = 2;
 	static final int CLUSTERING_IMPORT = 3;
 	static int clusteringMode = CLUSTERING_IMPORT;
-	static Dataset dataset = Dataset.TIMESMOOTHNESS_SAMPLE;
+	static Dataset dataset = Dataset.CIT_HEP_PH; // データ変更
 
 	private static String getClusteringModeName(int mode) { // デバッグ用のメソッド
 		switch (mode) {
@@ -97,7 +97,7 @@ public class MeshGenerator {
 		mesh.vertices.clear();
 
 		final String filename = dataset.getComsPath()
-				+ "runDynamicModularity_" + dataset.getName() +"_com_" + timestamp + "_nodes.csv";
+				+ "runDynamicModularity_" + dataset.getName() + "_com_" + timestamp + "_nodes.csv";
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line;

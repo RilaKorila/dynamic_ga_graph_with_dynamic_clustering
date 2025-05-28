@@ -51,6 +51,7 @@ public class TimeSmoothnessEvaluator {
             Integer dynamicCommunityId = dynamicCommunityIdMap.get(nodeIds);
 
             if (dynamicCommunityId == null) {
+                System.out.println("読み込むデータセットが正しいか要確認");
                 System.out.println("Warning: No community found for nodes: " + nodeIds);
                 continue;
             }
@@ -118,15 +119,15 @@ public class TimeSmoothnessEvaluator {
             final Graph currentGraph) {
         double totalDistance = 0.0;
         final double similarityThreshold = 0.25; // Jaccard係数の閾値
-    
+
         // キャッシュ用のMapを用意
         final HashMap<String, Double> jaccardCache = new HashMap<>();
         final HashMap<String, Double> distanceCache = new HashMap<>();
-    
+
         for (Vertex currentVertex : currentGraph.mesh.getVertices()) {
             for (Vertex previousVertex : previousGraph.mesh.getVertices()) {
                 final String vertexPairKey = currentVertex.getId() + "-" + previousVertex.getId();
-    
+
                 // Jaccard係数をキャッシュから取得または計算
                 double jaccardCoefficient;
                 if (jaccardCache.containsKey(vertexPairKey)) {
@@ -139,7 +140,7 @@ public class TimeSmoothnessEvaluator {
                     jaccardCoefficient = calculateJaccardCoefficient(currentNodeIds, previousNodeIds);
                     jaccardCache.put(vertexPairKey, jaccardCoefficient);
                 }
-    
+
                 // Jaccard係数が閾値以上の場合のみ距離を計算
                 if (jaccardCoefficient > similarityThreshold) {
                     double penalty;
@@ -154,12 +155,13 @@ public class TimeSmoothnessEvaluator {
                 }
             }
         }
-    
+
         return totalDistance;
     }
 
     /**
      * 与えられた2つのノードリストのJaccard係数を計算する
+     * 
      * @param nodes1
      * @param nodes2
      * @return Jaccard係数
@@ -175,8 +177,7 @@ public class TimeSmoothnessEvaluator {
         long unionSize = nodes1.size() + nodes2.size() - intersectionSize;
 
         return (double) intersectionSize / unionSize;
-    }   
-
+    }
 
     /**
      * 2点間のユークリッド距離を計算する
@@ -191,7 +192,8 @@ public class TimeSmoothnessEvaluator {
         double dy = Math.abs(p1[1] - p2[1]) * scale;
 
         double distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < 1e-6) distance = 0.0;
+        if (distance < 1e-6)
+            distance = 0.0;
         return distance;
     }
 

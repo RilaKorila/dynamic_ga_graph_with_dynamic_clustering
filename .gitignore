@@ -23,4 +23,7 @@ data/Cit-HepPh/*
 data/facebook/*
 data/timesmoothnessSample/*
 
+data/graph_info_*.json
+
+
 Koala-manygen/layoutsToEvaluate

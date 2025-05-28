@@ -1,5 +1,7 @@
-from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATASET_DIR_PATH
+from constants import CIT_HEP_PH_DIR_PATH as DATASET_DIR_PATH
+from constants import GRAPH_JSON_DIR
 from collections import defaultdict
+import os, json
 
 ### Cit-HepPhのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
@@ -86,8 +88,8 @@ def __write_filtered_coms(timestamp, alive_nodes):
     _coms_{n}_nodes.csv では、そのtimestampでは生きていないノードIDも含んでしまっているため、
     ntwk/配下のデータを参照して、そのtimestampで生きているノードだけを抽出し、結果をcsvファイルとして出力。
     """
-    com_fname = f"{DATASET_DIR_PATH}coms/runDynamicModularity_timesmoothnessSample_com_{timestamp}_nodes.csv"
-    filtered_com_fname = f"{DATASET_DIR_PATH}filtered_coms/runDynamicModularity_timesmoothnessSample_com_{timestamp}_nodes.csv"
+    com_fname = f"{DATASET_DIR_PATH}coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
+    filtered_com_fname = f"{DATASET_DIR_PATH}filtered_coms/runDynamicModularity_Cit-HepPh_com_{timestamp}_nodes.csv"
 
     # communityを取得
     com_nodes = {}
@@ -97,9 +99,41 @@ def __write_filtered_coms(timestamp, alive_nodes):
             com_nodes[community_id] = line.strip().split(",")
 
     # 生きているnodeのみ残す
+    graph_info = {}
     for community_id, nodes in com_nodes.items():
         filtered_nodes = list(filter(lambda node_id: node_id in alive_nodes, nodes))
+        graph_info[community_id] = filtered_nodes
         __write_csv(filtered_com_fname, filtered_nodes)
+    
+    # jsonにも書き出す
+    dump_graph_info(graph_info, timestamp)
+
+def dump_graph_info(graph_info, timestamp):
+    """
+    graphの情報(cluster_idとそこに属するnodes)をjsonファイルに保存する
+    """ 
+    # Convert sets to lists for JSON serialization
+    serializable_graph_info = {
+        cluster_id: list(nodes)
+        for cluster_id, nodes in graph_info.items()
+    }
+    
+    graph_json_path = os.path.join(GRAPH_JSON_DIR, f"graph_info_{timestamp}.json")
+    with open(graph_json_path, "w") as f:
+        json.dump(serializable_graph_info, f)
+
+def load_graph_info(timestamp):
+    """
+    graphの情報(cluster_idとそこに属するnodes)をjsonファイルから読み込む
+    """
+    graph_json_path = os.path.join(GRAPH_JSON_DIR, f"graph_info_{timestamp}.json")
+    with open(graph_json_path, "r") as f:
+        graph_info = json.load(f)
+        # Convert lists back to sets
+        return {
+            cluster_id: set(map(int, nodes))
+            for cluster_id, nodes in graph_info.items()
+        }
 
 def __write_csv(fname, nodes):
     # filtered_coms/配下にcsvファイルを作成

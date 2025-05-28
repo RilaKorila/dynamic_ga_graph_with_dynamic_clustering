@@ -1,5 +1,7 @@
 from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
+from constants import GRAPH_JSON_DIR
 from collections import defaultdict
+import json, os
 
 ### facebookのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
@@ -97,9 +99,41 @@ def __write_filtered_coms(timestamp, alive_nodes):
             com_nodes[community_id] = line.strip().split(",")
 
     # 生きているnodeのみ残す
+    graph_info = {}
     for community_id, nodes in com_nodes.items():
         filtered_nodes = list(filter(lambda node_id: node_id in alive_nodes, nodes))
+        graph_info[community_id] = filtered_nodes
         __write_csv(filtered_com_fname, filtered_nodes)
+    
+    # jsonにも書き出す
+    dump_graph_info(graph_info, timestamp)
+
+def dump_graph_info(graph_info, timestamp):
+    """
+    graphの情報(cluster_idとそこに属するnodes)をjsonファイルに保存する
+    """ 
+    # Convert sets to lists for JSON serialization
+    serializable_graph_info = {
+        cluster_id: list(nodes)
+        for cluster_id, nodes in graph_info.items()
+    }
+    
+    graph_json_path = os.path.join(GRAPH_JSON_DIR, f"graph_info_{timestamp}.json")
+    with open(graph_json_path, "w") as f:
+        json.dump(serializable_graph_info, f)
+
+def load_graph_info(timestamp):
+    """
+    graphの情報(cluster_idとそこに属するnodes)をjsonファイルから読み込む
+    """
+    graph_json_path = os.path.join(GRAPH_JSON_DIR, f"graph_info_{timestamp}.json")
+    with open(graph_json_path, "r") as f:
+        graph_info = json.load(f)
+        # Convert lists back to sets
+        return {
+            cluster_id: set(map(int, nodes))
+            for cluster_id, nodes in graph_info.items()
+        }
 
 def __write_csv(fname, nodes):
     # filtered_coms/配下にcsvファイルを作成

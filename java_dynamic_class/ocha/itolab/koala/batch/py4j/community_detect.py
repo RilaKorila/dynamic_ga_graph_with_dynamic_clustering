@@ -1,6 +1,8 @@
-from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
+from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
 
-DATASET_NAME = "timesmoothnessSample"  # データセット名を指定。使用するデータに応じて変更すること。
+DATASET_NAME = "Cit-HepPh"
+# DATASET_NAME = "facebook"
+# DATASET_NAME = "timesmoothnessSample"
 
 def get_community_detection_result(timestamp: int):
     """
