@@ -1,6 +1,6 @@
 from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
 
-DATASET_NAME = "Cit-HepPh"
+DATASET_NAME = "Cit-HepPh" # データ変更
 # DATASET_NAME = "facebook"
 # DATASET_NAME = "timesmoothnessSample"
 

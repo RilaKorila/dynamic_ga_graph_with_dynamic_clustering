@@ -1,4 +1,4 @@
-from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
+from constants import FACEBOOK_DIR_PATH as DATA_DIR_PATH
 from constants import GRAPH_JSON_DIR
 from collections import defaultdict
 import json, os
