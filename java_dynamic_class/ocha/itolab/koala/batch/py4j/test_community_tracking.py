@@ -1,23 +1,24 @@
 from community_tracking import track_communities
+from typing import List, Set
 
 if __name__ == "__main__":
     ## テスト
 
     # dynamic_community数が最小のケース (全てのtimestampで1つ前のtimestampに類似のcommunityが存在)
     print("== テスト：dynamic_community数が最小のケース ==")
-    same_community_partitions = [
-        [{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H"}, {"I"}],  # t = 0
-        [{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H"}, {"I"}],  # t = 1
-        [{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H"}, {"I"}],  # t = 2
+    same_community_partitions: List[List[Set[int]]] = [
+        [{1, 2, 3}, {4, 5, 6}, {7, 8}, {9}],  # t = 0
+        [{1, 2, 3}, {4, 5, 6}, {7, 8}, {9}],  # t = 1
+        [{1, 2, 3}, {4, 5, 6}, {7, 8}, {9}],  # t = 2
     ]
 
     actual_dynamic_communities = track_communities(same_community_partitions)
 
     expect_dynamic_communities = [
-        [(0, {"A", "B", "C"}), (1, {"A", "B", "C"}), (2, {"A", "B", "C"})],
-        [(0, {"D", "E", "F"}), (1, {"D", "E", "F"}), (2, {"D", "E", "F"})],
-        [(0, {"G", "H"}), (1, {"G", "H"}), (2, {"G", "H"})],
-        [(0, {"I"}), (1, {"I"}), (2, {"I"})],
+        [(0, {1, 2, 3}), (1, {1, 2, 3}), (2, {1, 2, 3})],
+        [(0, {4, 5, 6}), (1, {4, 5, 6}), (2, {4, 5, 6})],
+        [(0, {7, 8}), (1, {7, 8}), (2, {7, 8})],
+        [(0, {9}), (1, {9}), (2, {9})],
     ]
 
     if len(actual_dynamic_communities) != len(expect_dynamic_communities):
@@ -43,18 +44,18 @@ if __name__ == "__main__":
     # dynamic_community数が最大のケース (いずれのtimestampでも1つ前のtimestampに類似のcommunityが存在しない)
     print("== テスト：dynamic_community数が最大のケース ==")
 
-    same_community_partitions = [
-        [{"A", "B", "C"}],  # t = 0
-        [{"D", "E", "F"}],  # t = 1
-        [{"G", "H"}, {"I"}],  # t = 2
+    same_community_partitions: List[List[Set[int]]] = [
+        [{1, 2, 3}],  # t = 0
+        [{4, 5, 6}],  # t = 1
+        [{7, 8}, {9}],  # t = 2
     ]
 
     actual_dynamic_communities = track_communities(same_community_partitions)
     expect_dynamic_communities = [
-        [(0, {"A", "B", "C"})],
-        [(1, {"D", "E", "F"})],
-        [(2, {"G", "H"})],
-        [(2, {"I"})],
+        [(0, {1, 2, 3})],
+        [(1, {4, 5, 6})],
+        [(2, {7, 8})],
+        [(2, {9})],
     ]
 
     if len(actual_dynamic_communities) != len(expect_dynamic_communities):
@@ -85,16 +86,16 @@ if __name__ == "__main__":
     # timestamp 1, 3 の コミュニティが同じケース
     print("== テスト：timestamp 1,3 の コミュニティが同じケース ==")
 
-    same_community_partitions = [
-        [{"A", "B", "C"}],  # t = 0
-        [{"D", "E", "F"}],  # t = 1
-        [{"A", "B", "C"}],  # t = 2
+    same_community_partitions: List[List[Set[int]]] = [
+        [{1, 2, 3}],  # t = 0
+        [{4, 5, 6}],  # t = 1
+        [{1, 2, 3}],  # t = 2
     ]
 
     actual_dynamic_communities = track_communities(same_community_partitions)
     expect_dynamic_communities = [
-        [(0, {"A", "B", "C"}), (2, {"A", "B", "C"})],
-        [(1, {"D", "E", "F"})],
+        [(0, {1, 2, 3}), (2, {1, 2, 3})],
+        [(1, {4, 5, 6})],
     ]
 
     if len(actual_dynamic_communities) != len(expect_dynamic_communities):
@@ -117,19 +118,19 @@ if __name__ == "__main__":
         "== テスト：timestamp 1,3 の コミュニティが似ているケース(ゆるいマッチング) =="
     )
 
-    same_community_partitions = [
-        [{"A", "B", "C"}],  # t = 0
-        [{"D", "E", "F"}],  # t = 1
-        [{"A"}],  # t = 2
+    same_community_partitions: List[List[Set[int]]] = [
+        [{1, 2, 3}],  # t = 0
+        [{4, 5, 6}],  # t = 1
+        [{1}],  # t = 2
     ]
 
     actual_dynamic_communities = track_communities(same_community_partitions, 0.1)
     expect_dynamic_communities = [
         [
-            (0, {"A", "B", "C"}),
-            (2, {"A"}),
+            (0, {1, 2, 3}),
+            (2, {1}),
         ],  # ゆるいマッチングのため、timestamp 1, 3 のコミュニティは同じものとして扱われる
-        [(1, {"D", "E", "F"})],
+        [(1, {4, 5, 6})],
     ]
 
     if len(actual_dynamic_communities) != len(expect_dynamic_communities):
@@ -152,18 +153,18 @@ if __name__ == "__main__":
         "== テスト：timestamp 1,3 の コミュニティが似ているケース(厳しいマッチング) =="
     )
 
-    same_community_partitions = [
-        [{"A", "B", "C"}],  # t = 0
-        [{"D", "E", "F"}],  # t = 1
-        [{"A"}],  # t = 2
+    same_community_partitions: List[List[Set[int]]] = [
+        [{1, 2, 3}],  # t = 0
+        [{4, 5, 6}],  # t = 1
+        [{1}],  # t = 2
     ]
 
     actual_dynamic_communities = track_communities(same_community_partitions, 0.9)
     expect_dynamic_communities = [
-        [(0, {"A", "B", "C"})],
-        [(1, {"D", "E", "F"})],
+        [(0, {1, 2, 3})],
+        [(1, {4, 5, 6})],
         [
-            (2, {"A"})
+            (2, {1})
         ],  # 厳しいマッチングのため、timestamp 1, 3 のコミュニティは別々に扱われる
     ]
 
@@ -186,18 +187,18 @@ if __name__ == "__main__":
         "== テスト：timestamp 1,3 の コミュニティが似ているケース(厳しいマッチング) =="
     )
 
-    same_community_partitions = [
-        [{"A", "B", "C"}],  # t = 0
-        [{"D", "E", "F"}],  # t = 1
-        [{"A"}],  # t = 2
+    same_community_partitions: List[List[Set[int]]] = [
+        [{1, 2, 3}],  # t = 0
+        [{4, 5, 6}],  # t = 1
+        [{1}],  # t = 2
     ]
 
     actual_dynamic_communities = track_communities(same_community_partitions, 0.9)
     expect_dynamic_communities = [
-        [(0, {"A", "B", "C"})],
-        [(1, {"D", "E", "F"})],
+        [(0, {1, 2, 3})],
+        [(1, {4, 5, 6})],
         [
-            (2, {"A"})
+            (2, {1})
         ],  # 厳しいマッチングのため、timestamp 1, 3 のコミュニティは別々に扱われる
     ]
 
@@ -218,19 +219,19 @@ if __name__ == "__main__":
 
     print("== テスト：共通のcommunityが遠いidに存在するケース ==")
 
-    same_community_partitions = [
-        [{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H"}, {"I"}],  # t = 0
-        [{"D", "E", "F"}, {"G", "H"}, {"A", "B", "C"}, {"I"}],  # t = 1
-        [{"I"}, {"A", "B", "C"}, {"G", "H"}, {"D", "E", "F"}],  # t = 2
+    same_community_partitions: List[List[Set[int]]] = [
+        [{1, 2, 3}, {4, 5, 6}, {7, 8}, {9}],  # t = 0
+        [{4, 5, 6}, {7, 8}, {1, 2, 3}, {9}],  # t = 1
+        [{9}, {1, 2, 3}, {7, 8}, {4, 5, 6}],  # t = 2
     ]
 
     actual_dynamic_communities = track_communities(same_community_partitions)
 
     expect_dynamic_communities = [
-        [(0, {"A", "B", "C"}), (1, {"A", "B", "C"}), (2, {"A", "B", "C"})],
-        [(0, {"D", "E", "F"}), (1, {"D", "E", "F"}), (2, {"D", "E", "F"})],
-        [(0, {"G", "H"}), (1, {"G", "H"}), (2, {"G", "H"})],
-        [(0, {"I"}), (1, {"I"}), (2, {"I"})],
+        [(0, {1, 2, 3}), (1, {1, 2, 3}), (2, {1, 2, 3})],
+        [(0, {4, 5, 6}), (1, {4, 5, 6}), (2, {4, 5, 6})],
+        [(0, {7, 8}), (1, {7, 8}), (2, {7, 8})],
+        [(0, {9}), (1, {9}), (2, {9})],
     ]
 
     if len(actual_dynamic_communities) != len(expect_dynamic_communities):

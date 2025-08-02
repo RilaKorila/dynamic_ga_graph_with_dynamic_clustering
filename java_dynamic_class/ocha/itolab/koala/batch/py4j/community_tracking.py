@@ -57,14 +57,3 @@ def write_dynamic_communities_to_file(
     with open(file_path, "w") as f:
         for dc in dynamic_communities:
             f.write(str(dc) + "\n")
-
-
-if __name__ == "__main__":
-    partitions = [
-        [{"A", "B", "C"}, {"D", "E", "F"}, {"G", "H"}],  # t = 0
-        [{"A", "C"}, {"B", "D", "E"}, {"F", "G", "H"}],  # t = 1
-        [{"A", "B"}, {"C", "D"}, {"E", "F"}, {"G", "H"}],  # t = 2
-        [{"A", "B", "C"}, {"D", "E"}, {"F"}, {"G", "H"}],  # t = 3
-        [{"A", "B", "C", "D"}, {"E", "F"}, {"G", "H"}],  # t = 4
-    ]
-    print(track_communities(partitions))
