@@ -97,7 +97,7 @@ class NSGA2:
 
         if self.has_previous_layout:
             self.similar_cluster_pos_dict = dynamic_graph.get_similar_cluster_dict(
-                self.timestamp, self.previous_timestamp
+                self.timestamp
             )
 
         # 遺伝子長の計算

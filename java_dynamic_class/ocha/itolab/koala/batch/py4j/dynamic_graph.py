@@ -1,3 +1,4 @@
+from collections import defaultdict
 from community_detect import get_community_detection_result
 from community_tracking import track_communities
 from data_process.CitHepPh import (
@@ -17,6 +18,12 @@ import networkx as nx
 DATASET_NAME = "Cit-HepPh"
 # DATASET_NAME = "facebook"
 # DATASET_NAME = "timesmoothnessSample"
+
+
+class PreviousCommunity:
+    def __init__(self, id, similarity) -> None:
+        self.id = id
+        self.similarity = similarity
 
 
 #### DynamicGraphクラス ####
@@ -57,6 +64,10 @@ class DynamicGraph:
         self.graph_info_dict = {
             timestamp: load_graph_info(timestamp) for timestamp in self.timestamps
         }
+
+        self.similar_cluster_dict_of_all_timestamps = (
+            self.get_similar_cluster_dict_of_all_timestamps()
+        )
 
     def create_summarized_graph(self, communities, timestamp):
         """
@@ -121,7 +132,7 @@ class DynamicGraph:
         """
         communities = list(self.communities_dict.values())
         # theta値は調整可能。値が大きいほど厳密なマッチングになる
-        all_dynamic_communities = track_communities(communities, theta=0.25)
+        all_dynamic_communities = track_communities(communities, theta=0.1)
 
         time_ordered_dynamic_communities_dict = {}
 
@@ -175,13 +186,25 @@ class DynamicGraph:
     def get_graph_info(self, timestamp):
         return self.graph_info_dict[timestamp]
 
-    def get_similar_cluster_dict(self, timestamp, previous_timestamp):
-        JACCARD_THRESHOLD = 0.25
+    def get_similar_cluster_dict_of_all_timestamps(self):
+        similar_cluster_dict_of_all_timestamps = {}
+        for i in range(1, len(self.timestamps)):
+            pre_timestamp = self.timestamps[i - 1]
+            cur_timestamp = self.timestamps[i]
+
+            similar_cluster_dict_of_all_timestamps[cur_timestamp] = (
+                self._get_similar_cluster_dict(cur_timestamp, pre_timestamp)
+            )
+
+        return similar_cluster_dict_of_all_timestamps
+
+    def _get_similar_cluster_dict(self, timestamp, previous_timestamp):
+        JACCARD_THRESHOLD = 0.1
 
         def __calc_jaccard_similarity(c1, c2) -> float:
             return len(c1 & c2) / len(c1 | c2) if c1 | c2 else 0.0
 
-        cluster_similarity_dict = {}
+        cluster_similarity_dict = defaultdict(list)
         current_graph_info = self.graph_info_dict[timestamp]
         previous_graph_info = self.graph_info_dict[previous_timestamp]
 
@@ -190,16 +213,31 @@ class DynamicGraph:
 
         for current_cluster_id in current_cluster_ids:
             for previous_cluster_id in previous_cluster_ids:
-                if (
-                    __calc_jaccard_similarity(
-                        current_graph_info[current_cluster_id],
-                        previous_graph_info[previous_cluster_id],
+                sim = __calc_jaccard_similarity(
+                    current_graph_info[current_cluster_id],
+                    previous_graph_info[previous_cluster_id],
+                )
+
+                if sim > JACCARD_THRESHOLD:
+                    cluster_similarity_dict[current_cluster_id].append(
+                        PreviousCommunity(previous_cluster_id, sim)
                     )
-                    > JACCARD_THRESHOLD
-                ):
-                    cluster_similarity_dict[current_cluster_id] = previous_cluster_id
 
         return cluster_similarity_dict
+
+    def get_similar_cluster_dict(self, timestamp):
+        """
+        キーが current dynamic graphに含まれるcommunity_id,
+        バリューがそのcommunityと類似度の高いprevious_timestampのcommunity_idで構成される
+        辞書型の変数を返す
+        """
+        similar_cluster_dict = {}
+
+        tmp = self.similar_cluster_dict_of_all_timestamps[timestamp]
+        for k, v in tmp.items():
+            similar_cluster_dict[k] = v.id
+
+        return similar_cluster_dict
 
     def write_dynamic_communities_to_file(
         self, file_path, time_ordered_dynamic_communities_dict
