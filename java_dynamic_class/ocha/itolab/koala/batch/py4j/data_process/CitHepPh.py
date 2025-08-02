@@ -3,12 +3,13 @@ from constants import GRAPH_JSON_DIR
 from collections import defaultdict
 import os, json
 
+
 ### Cit-HepPhのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
 def get_graph_sequence_from_original_file(timestamps):
     """
     ntwk/配下のファイルを読み込み、graph_sequence を返す
-    
+
     ntwk/配下のファイルのフォーマットは、
     start_node_id   end_node_id
 
@@ -18,14 +19,14 @@ def get_graph_sequence_from_original_file(timestamps):
     - graph_sequence_dict (dict): timestampをキーとして、ノードとエッジのリストを値とする辞書
     """
 
-    graph_sequence_dict= {}
-    
+    graph_sequence_dict = {}
+
     for timestamp in timestamps:
         fname = f"{DATASET_DIR_PATH}ntwk/{timestamp}"
 
         nodes = set()
         edges = set()
-        
+
         with open(fname, "r") as f:
             lines = f.readlines()
 
@@ -34,18 +35,19 @@ def get_graph_sequence_from_original_file(timestamps):
                 nodes.add(start_node_id)
                 nodes.add(end_node_id)
                 edges.add((start_node_id, end_node_id))
-        
+
         # グラフを追加
         graph_sequence_dict[timestamp] = (list(nodes), list(edges))
-    
+
     return graph_sequence_dict
+
 
 def setup_data(timestamps):
     """
     Cit-HepPhのデータを加工し、必要なファイル群を作成する。
     """
     print("=========== setup_data ===========")
-    
+
     for timestamp in timestamps:
         edges = __get_edges(timestamp)
         nodes = __get_nodes(timestamp)
@@ -56,6 +58,7 @@ def setup_data(timestamps):
 
         # Sprawlが読み込めるようにフォーマットに変換
         __write_connectivity(nodes, edges, timestamp)
+
 
 def __get_edges(timestamp):
     fname = f"{DATASET_DIR_PATH}ntwk/{timestamp}"
@@ -68,6 +71,7 @@ def __get_edges(timestamp):
             start_node_id, end_node_id = line.strip().split("\t")
             edges.add((start_node_id, end_node_id))
     return edges
+
 
 def __get_nodes(timestamp):
     fname = f"{DATASET_DIR_PATH}ntwk/{timestamp}"
@@ -104,23 +108,24 @@ def __write_filtered_coms(timestamp, alive_nodes):
         filtered_nodes = list(filter(lambda node_id: node_id in alive_nodes, nodes))
         graph_info[community_id] = filtered_nodes
         __write_csv(filtered_com_fname, filtered_nodes)
-    
+
     # jsonにも書き出す
     dump_graph_info(graph_info, timestamp)
+
 
 def dump_graph_info(graph_info, timestamp):
     """
     graphの情報(cluster_idとそこに属するnodes)をjsonファイルに保存する
-    """ 
+    """
     # Convert sets to lists for JSON serialization
     serializable_graph_info = {
-        cluster_id: list(nodes)
-        for cluster_id, nodes in graph_info.items()
+        cluster_id: list(nodes) for cluster_id, nodes in graph_info.items()
     }
-    
+
     graph_json_path = os.path.join(GRAPH_JSON_DIR, f"graph_info_{timestamp}.json")
     with open(graph_json_path, "w") as f:
         json.dump(serializable_graph_info, f)
+
 
 def load_graph_info(timestamp):
     """
@@ -131,14 +136,15 @@ def load_graph_info(timestamp):
         graph_info = json.load(f)
         # Convert lists back to sets
         return {
-            cluster_id: set(map(int, nodes))
-            for cluster_id, nodes in graph_info.items()
+            cluster_id: set(map(int, nodes)) for cluster_id, nodes in graph_info.items()
         }
+
 
 def __write_csv(fname, nodes):
     # filtered_coms/配下にcsvファイルを作成
     with open(fname, "a") as f:
         f.write(",".join(nodes))
+
 
 def __write_connectivity(nodes, edges, timestamp):
     """
@@ -156,20 +162,20 @@ def __write_connectivity(nodes, edges, timestamp):
     incoming_edges = defaultdict(list)
 
     # エッジ情報を辞書に格納
-    for (start_node_id, end_node_id) in edges:        
+    for start_node_id, end_node_id in edges:
         outgoing_edges[start_node_id].append(end_node_id)
         incoming_edges[end_node_id].append(start_node_id)
 
     # ファイルに書き出し
     with open(fname, "w") as f:
         f.write("#connectivity\n")
-        
+
         for node_id in nodes:
             # ノード情報
             f.write(f"{node_id},node_label_{node_id}\n")
             # 外向きエッジ
             outgoing = outgoing_edges.get(node_id, [])
             f.write(",".join(outgoing) + "\n")
-            # 内向きエッジ  
+            # 内向きエッジ
             incoming = incoming_edges.get(node_id, [])
             f.write(",".join(incoming) + "\n")

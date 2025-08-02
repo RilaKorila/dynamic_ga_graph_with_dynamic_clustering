@@ -6,11 +6,11 @@ from constants import PNG_PATH
 
 
 class CsvWriter(metaclass=abc.ABCMeta):
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def write_header(cls) -> None:
         raise NotImplementedError()
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def write_row(cls, row) -> None:
         raise NotImplementedError()
 
@@ -58,7 +58,15 @@ class PenaltyCsvWriter(CsvWriter):
         with open(cls.fname, "a") as f:
             writer = csv.writer(f)
             writer.writerow(
-                ["gen", "nnpen", "nepen", "eepen", "normalized_clutter", "sprawl", "time_smoothness"]
+                [
+                    "gen",
+                    "nnpen",
+                    "nepen",
+                    "eepen",
+                    "normalized_clutter",
+                    "sprawl",
+                    "time_smoothness",
+                ]
             )
 
     @classmethod
@@ -71,9 +79,11 @@ class PenaltyCsvWriter(CsvWriter):
 class ClutterSprawlCsvWriter(CsvWriter):
     @classmethod
     def set_timestamp(cls, timestamp):
-        directory = PNG_PATH + f"{timestamp}/" # directoryが存在していなかったら作成する
+        directory = (
+            PNG_PATH + f"{timestamp}/"
+        )  # directoryが存在していなかったら作成する
         os.makedirs(directory, exist_ok=True)
-        
+
         cls.fname = directory + "clutter_sprawl_all_generation.csv"
 
     @classmethod

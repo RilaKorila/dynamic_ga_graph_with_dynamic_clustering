@@ -9,10 +9,18 @@ EE_RATIO = 0.5
 
 
 class HistoryEvaluationStats:
-    def __init__(self, receive_from_java_func, previous_timestamp, timestamp, dynamic_graph, has_previous_layout, current_layout_gene_len):
+    def __init__(
+        self,
+        receive_from_java_func,
+        previous_timestamp,
+        timestamp,
+        dynamic_graph,
+        has_previous_layout,
+        current_layout_gene_len,
+    ):
         print("過去の全ての世代を基準に評価値をスケール")
         ClutterSprawlCsvWriter.set_timestamp(timestamp)  # タイムスタンプを設定
-        self.csv_fname = PNG_PATH + f"{timestamp}/" +   "evaluation_stats.csv"
+        self.csv_fname = PNG_PATH + f"{timestamp}/" + "evaluation_stats.csv"
         self.sprawls = []
         self.nnpens = []
         self.nepens = []
@@ -35,22 +43,35 @@ class HistoryEvaluationStats:
         """
         NN, NE, EEの, time_smoothnessの算出をし、それぞれのリストに計算結果を保存する。ここでは正規化はされない。
         """
-        dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
+        dynamic_community = (
+            self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
+        )
 
         # 1つ目のtimestampの場合は、previous_dynamic_community は None
         if self.has_previous_layout:
-            previous_dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.previous_timestamp)
+            previous_dynamic_community = (
+                self.dynamic_graph.time_ordered_dynamic_communities_dict.get(
+                    self.previous_timestamp
+                )
+            )
         else:
             previous_dynamic_community = None
 
         for id, individual in enumerate(individuals):
-            current_layout_plist = individual[:self.current_layout_gene_len]
+            current_layout_plist = individual[: self.current_layout_gene_len]
             if self.has_previous_layout:
-                previous_layout_plist = individual[self.current_layout_gene_len:]
+                previous_layout_plist = individual[self.current_layout_gene_len :]
             else:
                 previous_layout_plist = None
-            results = self.receive_from_java_func(generation, id, previous_layout_plist, current_layout_plist, self.timestamp, 
-                                                  previous_dynamic_community, dynamic_community)
+            results = self.receive_from_java_func(
+                generation,
+                id,
+                previous_layout_plist,
+                current_layout_plist,
+                self.timestamp,
+                previous_dynamic_community,
+                dynamic_community,
+            )
             sprawl, nnpen, nepen, eepen, time_smoothness = results
             self.nnpens.append(nnpen)
             self.nepens.append(nepen)
@@ -102,22 +123,44 @@ class HistoryEvaluationStats:
             clutterの算出方法は3種類
             正規化, 標準化, 定数でわる, の3種類の処理をかけたpenaltyをそれぞれ係数でたしあわせて算出する
         """
-        previous_dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.previous_timestamp)
-        dynamic_community = self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
+        previous_dynamic_community = (
+            self.dynamic_graph.time_ordered_dynamic_communities_dict.get(
+                self.previous_timestamp
+            )
+        )
+        dynamic_community = (
+            self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
+        )
 
-        current_layout_plist = individual[:self.current_layout_gene_len]
+        current_layout_plist = individual[: self.current_layout_gene_len]
         if self.has_previous_layout:
-            previous_layout_plist = individual[self.current_layout_gene_len:]
+            previous_layout_plist = individual[self.current_layout_gene_len :]
         else:
             previous_layout_plist = None
 
-        results = self.receive_from_java_func(generation, id, previous_layout_plist, current_layout_plist, self.timestamp, previous_dynamic_community, dynamic_community)
+        results = self.receive_from_java_func(
+            generation,
+            id,
+            previous_layout_plist,
+            current_layout_plist,
+            self.timestamp,
+            previous_dynamic_community,
+            dynamic_community,
+        )
         sprawl = results[0]
         clutter = self.__calc_normalized_clutter(results[1], results[2], results[3])
         time_smoothness = results[4]
 
         # 実験用
-        row = [generation, results[1], results[2], results[3], clutter, sprawl, time_smoothness]
+        row = [
+            generation,
+            results[1],
+            results[2],
+            results[3],
+            clutter,
+            sprawl,
+            time_smoothness,
+        ]
         PenaltyCsvWriter.write_row(row)
 
         return (sprawl, clutter, time_smoothness)
@@ -152,7 +195,7 @@ class HistoryEvaluationStats:
         return clutter
 
     def __calc_standardized_clutter(self, results):
-        _, nnpen, nepen, eepen, _  = results
+        _, nnpen, nepen, eepen, _ = results
 
         standardized_nnpen = (
             (nnpen - self.NNave) / self.NNstd if self.NNstd != 0.0 else 0.0
@@ -194,7 +237,12 @@ class HistoryEvaluationStats:
         print("NNmax", self.NNmax, "NNmax", self.NNmin)
         print("NEmax", self.NEmax, "NEmin", self.NEmin)
         print("EEmax", self.EEmax, "EEmin", self.EEmin)
-        print("time_smoothness_max", self.time_smoothness_max, "time_smoothness_min", self.time_smoothness_min)
+        print(
+            "time_smoothness_max",
+            self.time_smoothness_max,
+            "time_smoothness_min",
+            self.time_smoothness_min,
+        )
 
     def __set_column_to_csv(self):
         StatsCsvWriter.write_header()
@@ -241,5 +289,6 @@ class HistoryEvaluationStats:
                 time_smoothness = self.time_smoothnesses[gen * population_length + i]
                 clutter = self.__calc_normalized_clutter(nnpen, nepen, eepen)
 
-                ClutterSprawlCsvWriter.write_row([gen, clutter, sprawl, time_smoothness])
-
+                ClutterSprawlCsvWriter.write_row(
+                    [gen, clutter, sprawl, time_smoothness]
+                )

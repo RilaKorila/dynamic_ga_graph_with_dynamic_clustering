@@ -1,8 +1,9 @@
 from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
 
-DATASET_NAME = "Cit-HepPh" # データ変更
+DATASET_NAME = "Cit-HepPh"  # データ変更
 # DATASET_NAME = "facebook"
 # DATASET_NAME = "timesmoothnessSample"
+
 
 def get_community_detection_result(timestamp: int):
     """
@@ -17,5 +18,5 @@ def get_community_detection_result(timestamp: int):
             # 各行が各communitiyに属するnode_idがカンマ区切りで記載されている
             community = line.strip().split(",")
             communities.append(set(community))
-    
+
     return communities

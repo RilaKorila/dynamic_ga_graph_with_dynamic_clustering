@@ -28,7 +28,9 @@ class EvaluationStats:
         nepens = []
         eepens = []
         for id, individual in enumerate(self.individuals):
-            results = self.receive_from_java_func(generation, id, individual, self.gene_length)
+            results = self.receive_from_java_func(
+                generation, id, individual, self.gene_length
+            )
             sprawl, nnpen, nepen, eepen = results
             sprawls.append(sprawl)
             nnpens.append(nnpen)
@@ -69,7 +71,9 @@ class EvaluationStats:
             clutterの算出方法は3種類
             正規化, 標準化, 定数でわる, の3種類の処理をかけたpenaltyをそれぞれ係数でたしあわせて算出する
         """
-        results = self.receive_from_java_func(generation, id, individual, self.gene_length)
+        results = self.receive_from_java_func(
+            generation, id, individual, self.gene_length
+        )
         sprawl = results[0]
         clutter = self.__calc_standardized_clutter(results)
 

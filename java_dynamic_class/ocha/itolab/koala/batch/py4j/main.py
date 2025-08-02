@@ -17,7 +17,15 @@ EE_RATIO = 0.5
 
 # GAの目的関数を定義
 # ここでjavaファイルを呼び出す
-def get_evaluation_results(generation, id, previous_plist, current_plist, timestamp, previous_dynamic_communities, dynamic_communities):
+def get_evaluation_results(
+    generation,
+    id,
+    previous_plist,
+    current_plist,
+    timestamp,
+    previous_dynamic_communities,
+    dynamic_communities,
+):
     """遺伝子の情報を与え、その遺伝子によって描画されるグラフレイアウトの評価を返す関数
 
     Args:
@@ -36,16 +44,28 @@ def get_evaluation_results(generation, id, previous_plist, current_plist, timest
         Javaからは、sprawl, NN, NE, EEを受け取る。
         受け取った NN, NE, EE からclutterを算出する。
     """
-    java_previous_dynamic_communities = __convert_time_ordered_dynamic_communities(previous_dynamic_communities)
-    java_dynamic_communities = __convert_time_ordered_dynamic_communities(dynamic_communities)
-    
+    java_previous_dynamic_communities = __convert_time_ordered_dynamic_communities(
+        previous_dynamic_communities
+    )
+    java_dynamic_communities = __convert_time_ordered_dynamic_communities(
+        dynamic_communities
+    )
+
     # resは、[sprawl, NN, NE, EE] のfloat配列
     java_previous_plist = __convert_java_double_list(previous_plist)
     java_current_plist = __convert_java_double_list(current_plist)
-    res = koala_to_sprawlter.obfunc(generation, id, java_previous_plist, java_current_plist, timestamp, 
-                                    java_previous_dynamic_communities, java_dynamic_communities)
+    res = koala_to_sprawlter.obfunc(  # type: ignore
+        generation,
+        id,
+        java_previous_plist,
+        java_current_plist,
+        timestamp,
+        java_previous_dynamic_communities,
+        java_dynamic_communities,
+    )
 
     return res
+
 
 def write_layout_file(individual, timestamp, fname):
     """
@@ -59,7 +79,8 @@ def write_layout_file(individual, timestamp, fname):
         なし
     """
     java_individual = __convert_java_double_list(individual)
-    koala_to_sprawlter.writeCsv(java_individual, timestamp, fname)
+    koala_to_sprawlter.writeCsv(java_individual, timestamp, fname)  # type: ignore
+
 
 def __convert_java_double_list(pylist: list[float] | None):
     """
@@ -76,9 +97,10 @@ def __convert_java_double_list(pylist: list[float] | None):
 
     java_double_array = gateway.new_array(gateway.jvm.double, len(pylist))
     for i, val in enumerate(pylist):
-        java_double_array[i] = val
+        java_double_array[i] = val  # type: ignore
 
     return java_double_array
+
 
 def __convert_time_ordered_dynamic_communities(communities: list[set[int]] | None):
     """
@@ -93,66 +115,73 @@ def __convert_time_ordered_dynamic_communities(communities: list[set[int]] | Non
     if communities is None:
         return None
 
-    java_list = gateway.jvm.java.util.ArrayList()
+    java_list = gateway.jvm.java.util.ArrayList()  # type: ignore
 
     for py_set in communities:
-        java_inner_list = gateway.jvm.java.util.ArrayList()
+        java_inner_list = gateway.jvm.java.util.ArrayList()  # type: ignore
         for val in sorted(py_set):  # 昇順に並べ替える
-            java_inner_list.add(int(val))  # JavaのList<Integer>にするためにstrに変換
-        java_list.add(java_inner_list)
+            java_inner_list.add(int(val))  # type: ignore # JavaのList<Integer>にするためにstrに変換
+        java_list.add(java_inner_list)  # type: ignore
 
     return java_list
+
 
 ###### main関数: GAプログラムを呼び出す
 # ga = GA(myfunc, CHROMOSOME_LENGTH)
 # ga.GA_main_eaMuCommaLambda()
 
-start = time.perf_counter() # 計測開始
+start = time.perf_counter()  # 計測開始
+
 
 def optimize_layouts():
     # timestamps = [ i for i in range(1, 4)]
     timestamps = [1, 2, 3]
     results = []
     previous_best_layouts = None
-    
+
     # 各タイムスタンプでの最適化を実行
     for i, timestamp in enumerate(timestamps):
         print(f"Optimizing layout {i+1} of {len(timestamps)}...")
 
         dynamic_graph = DynamicGraph(timestamps)
-        
+
         ga = NSGA2(
             obfunc=get_evaluation_results,
             write_layout_file_func=write_layout_file,
             dynamic_graph=dynamic_graph,
             timestamp=timestamp,
             previous_best_layouts=previous_best_layouts,  # 前のタイムスタンプの良い解を渡す
-            previous_timestamp=timestamps[i-1] if i > 0 else None  # 前のタイムスタンプを渡す
+            previous_timestamp=(
+                timestamps[i - 1] if i > 0 else None
+            ),  # 前のタイムスタンプを渡す
         )
-        
+
         # 最適化実行
         pop, pop_init, logbook = ga.main()
-        
+
         # 結果を保存
-        results.append({
-            'timestamp': timestamp,
-            'population': pop,
-            'initial_population': pop_init,
-            'logbook': logbook
-        })
-        
+        results.append(
+            {
+                "timestamp": timestamp,
+                "population": pop,
+                "initial_population": pop_init,
+                "logbook": logbook,
+            }
+        )
+
         # 次のレイアウトのベースとして使用する上位n個の解を選択
         previous_best_layouts = select_best_layouts(pop, n=5)  # 上位5個を選択
-    
+
     return results
+
 
 def select_best_layouts(population, n=5):
     """パレートフロントから上位n個の良い解を選択する
-    
+
     Args:
         population: 最適化後の個体群
         n: 選択する解の数
-    
+
     Returns:
         選択された上位n個の解のリスト
     """
@@ -164,15 +193,16 @@ def select_best_layouts(population, n=5):
         weighted_score = 0.3 * sprawl + 0.3 * clutter + 0.4 * time_smoothness
         # weighted_score = time_smoothness 検証用
         weighted_scores.append((ind, weighted_score))
-    
+
     # スコアでソート
     weighted_scores.sort(key=lambda x: x[1])
-    
+
     # 上位n個の解を返す
     return [ind for ind, _ in weighted_scores[:n]]
 
-end = time.perf_counter() #計測終了
-print('処理にかかった時間：{:.2f}秒'.format(end-start))
+
+end = time.perf_counter()  # 計測終了
+print("処理にかかった時間：{:.2f}秒".format(end - start))
 
 # NSGA-IIIを呼び出す
 # ga = NSGA3(myfunc, CHROMOSOME_LENGTH)
@@ -189,7 +219,6 @@ if __name__ == "__main__":
     ]
     p = subprocess.Popen(args)
 
-
     # サーバー起動前に処理が下へ行くのを防ぐ
     time.sleep(3)
 
@@ -199,12 +228,12 @@ if __name__ == "__main__":
     koala_to_sprawlter = gateway.entry_point
 
     start = time.perf_counter()
-    
+
     # 最適化実行
     results = optimize_layouts()
-    
+
     end = time.perf_counter()
-    print('処理にかかった時間：{:.2f}秒'.format(end-start))
-    
+    print("処理にかかった時間：{:.2f}秒".format(end - start))
+
     # プロセスをkill
     gateway.shutdown()
