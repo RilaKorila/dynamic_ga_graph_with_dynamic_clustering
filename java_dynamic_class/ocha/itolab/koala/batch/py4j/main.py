@@ -137,7 +137,7 @@ def optimize_layouts():
     # timestamps = [ i for i in range(1, 4)]
     timestamps = [1, 2, 3]
     results = []
-    previous_best_layouts = None
+    previous_best_layouts = []
 
     # 各タイムスタンプでの最適化を実行
     for i, timestamp in enumerate(timestamps):
