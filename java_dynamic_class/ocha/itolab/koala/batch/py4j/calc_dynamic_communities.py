@@ -1,8 +1,7 @@
 from collections import defaultdict
 import csv
 import matplotlib.pyplot as plt
-from constants import CIT_HEP_PH_DIR_PATH as DATASET_DIR_PATH
-from constants import PNG_PATH
+from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATASET_DIR_PATH
 
 ### 動作確認用のスクリプト
 

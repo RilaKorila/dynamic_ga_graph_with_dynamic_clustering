@@ -1,23 +1,19 @@
 from collections import defaultdict
 from community_detect import get_community_detection_result
 from community_tracking import track_communities
-from data_process.CitHepPh import (
-    get_graph_sequence_from_original_file,
-    setup_data,
-    load_graph_info,
-)
+# データ変更
+# import data_process.CitHepPh as data_process
+# from data_process.facebook as data_process
+import data_process.timesmoothnessSample as data_process
 
-# from data_process.facebook import get_graph_sequence_from_original_file, setup_data, load_graph_info
-# from data_process.timesmoothnessSample import get_graph_sequence_from_original_file, setup_data, load_graph_info
-from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
-
+# データ変更
+# from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
 # from constants import FACEBOOK_DIR_PATH as DATA_DIR_PATH
-# from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
-import networkx as nx
+from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
 
-DATASET_NAME = "Cit-HepPh"
-# DATASET_NAME = "facebook"
-# DATASET_NAME = "timesmoothnessSample"
+
+# データ変更
+DATASET_NAME = data_process.DATASET_NAME
 
 
 class PreviousCommunity:
@@ -32,10 +28,10 @@ class DynamicGraph:
         self.timestamps = timestamps
 
         # 使用するデータに依存した setup_data メソッドを呼び出す
-        setup_data(self.timestamps)
+        data_process.setup_data(self.timestamps)
 
         ## データを取得 （使用するデータを変えるときはここを変更する）
-        self.graph_sequence_dict = get_graph_sequence_from_original_file(
+        self.graph_sequence_dict = data_process.get_graph_sequence_from_original_file(
             self.timestamps
         )
 
@@ -62,7 +58,8 @@ class DynamicGraph:
 
         # グラフを構成するnode情報を読み込む
         self.graph_info_dict = {
-            timestamp: load_graph_info(timestamp) for timestamp in self.timestamps
+            timestamp: data_process.load_graph_info(timestamp)
+            for timestamp in self.timestamps
         }
 
         self.similar_cluster_dict_of_all_timestamps = (

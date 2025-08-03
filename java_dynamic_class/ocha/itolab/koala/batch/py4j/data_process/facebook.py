@@ -6,6 +6,10 @@ import json, os
 
 ### facebookのデータを加工するメソッド
 # 他のデータではつかい回さない (dynamic_graph.pyでIFを揃えてデータをハンドリングするため)
+
+DATASET_NAME = "facebook"
+
+
 def get_graph_sequence_from_original_file(timestamps):
     """
     ntwk/配下のファイルを読み込み、graph_sequence を返す
@@ -46,7 +50,7 @@ def setup_data(timestamps):
     """
     facebookのデータを加工し、必要なファイル群を作成する。
     """
-    print("=========== setup_data ===========")
+    print("=========== Facebook: setup_data ===========")
 
     for timestamp in timestamps:
         edges = __get_edges(timestamp)
