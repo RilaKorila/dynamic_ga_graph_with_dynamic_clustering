@@ -1,22 +1,27 @@
 from collections import defaultdict
 from community_detect import get_community_detection_result
 from community_tracking import track_communities
+import json
+import os
+import networkx as nx
+
 # データ変更
-# import data_process.CitHepPh as data_process
+import data_process.CitHepPh as data_process
+
 # from data_process.facebook as data_process
-import data_process.timesmoothnessSample as data_process
+# import data_process.timesmoothnessSample as data_process
 
 # データ変更
-# from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
+from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
+
 # from constants import FACEBOOK_DIR_PATH as DATA_DIR_PATH
-from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
+# from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
 
 
-# データ変更
 DATASET_NAME = data_process.DATASET_NAME
 
 
-class PreviousCommunity:
+class PreviousSimilarCommunity:
     def __init__(self, id, similarity) -> None:
         self.id = id
         self.similarity = similarity
@@ -64,6 +69,10 @@ class DynamicGraph:
 
         self.similar_cluster_dict_of_all_timestamps = (
             self.get_similar_cluster_dict_of_all_timestamps()
+        )
+
+        self.write_similar_cluster_dict_of_all_timestamps_to_file(
+            DATA_DIR_PATH + "similar_cluster_dict/"
         )
 
     def create_summarized_graph(self, communities, timestamp):
@@ -217,22 +226,25 @@ class DynamicGraph:
 
                 if sim > JACCARD_THRESHOLD:
                     cluster_similarity_dict[current_cluster_id].append(
-                        PreviousCommunity(previous_cluster_id, sim)
+                        PreviousSimilarCommunity(previous_cluster_id, sim)
                     )
 
         return cluster_similarity_dict
 
+    def get_previous_similarity_dict(self, timestamp):
+        return self.similar_cluster_dict_of_all_timestamps.get(timestamp, {})
+
     def get_similar_cluster_dict(self, timestamp):
         """
         キーが current dynamic graphに含まれるcommunity_id,
-        バリューがそのcommunityと類似度の高いprevious_timestampのcommunity_idで構成される
+        バリューがそのcommunityと類似度の高いprevious_timestampのcommunity_idのリストで構成される
         辞書型の変数を返す
         """
         similar_cluster_dict = {}
 
         tmp = self.similar_cluster_dict_of_all_timestamps[timestamp]
         for k, v in tmp.items():
-            similar_cluster_dict[k] = v.id
+            similar_cluster_dict[k] = list(map(lambda x: x.id, v))
 
         return similar_cluster_dict
 
@@ -313,3 +325,49 @@ class DynamicGraph:
                         + str(timestamp)
                         + ".txt の内容が不足しています。"
                     )
+
+    def write_similar_cluster_dict_of_all_timestamps_to_file(self, file_path):
+        """
+        すべてのタイムスタンプの類似クラスタ辞書をJSONファイルに出力する
+
+        Args:
+            file_path (str): 出力先ディレクトリのパス
+        """
+        # 出力ディレクトリを作成
+        os.makedirs(file_path, exist_ok=True)
+
+        # 各タイムスタンプペアについて類似クラスタ辞書をJSONファイルに出力
+        for i in range(1, len(self.timestamps)):
+            current_timestamp = self.timestamps[i]
+            previous_timestamp = self.timestamps[i - 1]
+
+            # 類似クラスタ辞書を取得
+            similar_cluster_dict = self.similar_cluster_dict_of_all_timestamps[
+                current_timestamp
+            ]
+
+            # JSON形式に変換（PreviousCommunityオブジェクトを辞書に変換）
+            json_dict = defaultdict(list)
+            for (
+                current_cluster_id,
+                previous_communities,
+            ) in similar_cluster_dict.items():
+                for previous_community in previous_communities:
+                    json_dict[str(current_cluster_id)].append(
+                        {
+                            "previous_cluster_id": previous_community.id,
+                            "similarity": previous_community.similarity,
+                        }
+                    )
+
+            # ファイル名を作成
+            filename = (
+                f"similar_cluster_dict_{previous_timestamp}_to_{current_timestamp}.json"
+            )
+            filepath = file_path + filename
+
+            # JSONファイルに出力
+            with open(filepath, "w") as f:
+                json.dump(json_dict, f, indent=2)
+
+            print(f"Similar cluster dict saved to: {filepath}")

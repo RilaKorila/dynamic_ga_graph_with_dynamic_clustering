@@ -35,9 +35,9 @@ source streamlit_csv/bin/activate
 # dynamic_graphの時は、dynamic_community_idも選択可能
 node_color="dynamic_community_id" 
 node_size="same"
-# dataset_name="Cit-HepPh"
+dataset_name="Cit-HepPh"
 # dataset_name="facebook"
-dataset_name="timesmoothnessSample"
+# dataset_name="timesmoothnessSample"
 target_timestamp="2"
 previous_timestamp="1"
 python createDynamicGraphHtmls.py ${csv_folder} ${html_folder} ${target_timestamp} ${previous_timestamp} ${dataset_name}

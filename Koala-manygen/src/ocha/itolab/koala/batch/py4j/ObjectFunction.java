@@ -2,6 +2,7 @@ package ocha.itolab.koala.batch.py4j;
 
 import py4j.GatewayServer;
 import java.util.Map;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,11 +11,12 @@ public class ObjectFunction {
 
 	public double[] obfunc(final int generation, final int id, final double[] previous_gene, final double[] gene,
 			final int timestamp, final List<List<Integer>> previousDynamicCommunities,
-			final List<List<Integer>> dynamicCommunities) {
+			final List<List<Integer>> dynamicCommunities,
+			final Map<Integer, List<AbstractMap.SimpleEntry<Integer, Double>>> similarCommunities) {
 
 		// TimeSmoothnessEvaluator の計算
 		final double timeSmoothness = TimeSmoothnessEvaluator.execute(previous_gene, gene,
-				timestamp, previousDynamicCommunities, dynamicCommunities);
+				timestamp, previousDynamicCommunities, dynamicCommunities, similarCommunities);
 
 		// Sprawlter の計算
 		// TODO 前のレイアウトは無視して、現在のレイアウトのみSprawlterで評価する点を再検討する

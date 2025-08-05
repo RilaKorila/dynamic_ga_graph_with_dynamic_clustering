@@ -5,7 +5,9 @@ import ocha.itolab.koala.core.data.Node;
 import ocha.itolab.koala.core.data.Graph;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
+import java.util.AbstractMap;
 import java.util.stream.Collectors;
 
 public class TimeSmoothnessEvaluator {
@@ -13,7 +15,8 @@ public class TimeSmoothnessEvaluator {
     }
 
     public static double execute(final double previousInit[], final double init[], final int timestamp,
-            final List<List<Integer>> previousDynamicCommunities, final List<List<Integer>> dynamicCommunities) {
+            final List<List<Integer>> previousDynamicCommunities, final List<List<Integer>> dynamicCommunities,
+            final Map<Integer, List<AbstractMap.SimpleEntry<Integer, Double>>> similarCommunities) {
         if (previousDynamicCommunities == null) {
             return 0.0;
         }
@@ -31,7 +34,7 @@ public class TimeSmoothnessEvaluator {
         assignDynamicCommunityId(previousGraph, previousDynamicCommunityIdMap);
 
         // 時間平滑性を計算する
-        return calculateTimeSmoothnessWithMultipleMatches(previousGraph, currentGraph);
+        return calculateTimeSmoothnessWithMultipleMatches(previousGraph, currentGraph, similarCommunities);
     }
 
     /**
@@ -108,75 +111,38 @@ public class TimeSmoothnessEvaluator {
     }
 
     /**
-     * 時間平滑性を計算する。ただし、同じdynamic_community_idを持つメタノード同士だけでなく、Jaccard係数が閾値以上のメタノード同士も考慮する。
-     * ("類似のmetanode"が 1:1 ではなく、1:n の関係になる)
+     * 時間平滑性を計算する。similarCommunitiesを使用して類似コミュニティ間の距離を計算する。
      * 
-     * @param previousGraph 1つ前のタイムスタンプのグラフ
-     * @param currentGraph  現在のタイムスタンプのグラフ
+     * @param previousGraph      1つ前のタイムスタンプのグラフ
+     * @param currentGraph       現在のタイムスタンプのグラフ
+     * @param similarCommunities 類似コミュニティのマッピング
      * @return 時間平滑性
      */
     private static double calculateTimeSmoothnessWithMultipleMatches(final Graph previousGraph,
-            final Graph currentGraph) {
+            final Graph currentGraph,
+            final Map<Integer, List<AbstractMap.SimpleEntry<Integer, Double>>> similarCommunities) {
         double totalDistance = 0.0;
-        final double similarityThreshold = 0.25; // Jaccard係数の閾値
 
-        // キャッシュ用のMapを用意
-        final HashMap<String, Double> jaccardCache = new HashMap<>();
-        final HashMap<String, Double> distanceCache = new HashMap<>();
+        // similarCommunities でループ
+        for (final int currentCommunityId : similarCommunities.keySet()) {
+            final List<AbstractMap.SimpleEntry<Integer, Double>> similarCommunitiesList = similarCommunities
+                    .get(currentCommunityId);
+            for (final AbstractMap.SimpleEntry<Integer, Double> similarCommunity : similarCommunitiesList) {
+                final int previousCommunityId = similarCommunity.getKey();
+                final double similarity = similarCommunity.getValue();
 
-        for (Vertex currentVertex : currentGraph.mesh.getVertices()) {
-            for (Vertex previousVertex : previousGraph.mesh.getVertices()) {
-                final String vertexPairKey = currentVertex.getId() + "-" + previousVertex.getId();
+                // 類似コミュニティに属する前のグラフの頂点を探す
+                final Vertex previousVertex = previousGraph.mesh.getVertex(previousCommunityId);
+                final Vertex currentVertex = currentGraph.mesh.getVertex(currentCommunityId);
 
-                // Jaccard係数をキャッシュから取得または計算
-                double jaccardCoefficient;
-                if (jaccardCache.containsKey(vertexPairKey)) {
-                    jaccardCoefficient = jaccardCache.get(vertexPairKey);
-                } else {
-                    List<Integer> currentNodeIds = currentVertex.getNodes().stream()
-                            .map(Node::getId).sorted().collect(Collectors.toList());
-                    List<Integer> previousNodeIds = previousVertex.getNodes().stream()
-                            .map(Node::getId).sorted().collect(Collectors.toList());
-                    jaccardCoefficient = calculateJaccardCoefficient(currentNodeIds, previousNodeIds);
-                    jaccardCache.put(vertexPairKey, jaccardCoefficient);
-                }
-
-                // Jaccard係数が閾値以上の場合のみ距離を計算
-                if (jaccardCoefficient > similarityThreshold) {
-                    double penalty;
-                    if (distanceCache.containsKey(vertexPairKey)) {
-                        penalty = distanceCache.get(vertexPairKey);
-                    } else {
-                        penalty = calculateDistance(currentVertex.getPosition(), previousVertex.getPosition(), 1)
-                                * currentVertex.getNodeNum();
-                        distanceCache.put(vertexPairKey, penalty);
-                    }
-                    totalDistance += penalty;
-                }
+                double penalty = calculateDistance(
+                        currentVertex.getPosition(),
+                        previousVertex.getPosition(), 1) * currentVertex.getNodeNum() * similarity;
+                totalDistance += penalty;
             }
         }
 
         return totalDistance;
-    }
-
-    /**
-     * 与えられた2つのノードリストのJaccard係数を計算する
-     * 
-     * @param nodes1
-     * @param nodes2
-     * @return Jaccard係数
-     */
-    private static double calculateJaccardCoefficient(final List<Integer> nodes1, final List<Integer> nodes2) {
-        if (nodes1.isEmpty() || nodes2.isEmpty()) {
-            return 0.0;
-        }
-
-        // 共通の要素数を計算
-        long intersectionSize = nodes1.stream().filter(nodes2::contains).count();
-        // 和集合のサイズを計算
-        long unionSize = nodes1.size() + nodes2.size() - intersectionSize;
-
-        return (double) intersectionSize / unionSize;
     }
 
     /**

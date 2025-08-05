@@ -1,5 +1,5 @@
-from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH  # データ変更
-import data_process.timesmoothnessSample as data_process  # データ変更
+from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH  # データ変更
+import data_process.CitHepPh as data_process  # データ変更
 
 
 DATASET_NAME = data_process.DATASET_NAME

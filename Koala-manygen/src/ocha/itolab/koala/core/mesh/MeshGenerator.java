@@ -41,8 +41,6 @@ public class MeshGenerator {
 
 		long t1 = System.currentTimeMillis();
 
-		System.out.println("クラスタリングモード: " + getClusteringModeName(clusteringMode));
-
 		if (clusteringMode == CLUSTERING_BYMYSELF) {
 
 			// 既存のKoala のクラスタリング処理

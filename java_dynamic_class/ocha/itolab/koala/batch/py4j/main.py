@@ -4,7 +4,7 @@ import time
 import constants
 from nsga2 import NSGA2
 from py4j.java_gateway import JavaGateway
-from dynamic_graph import DynamicGraph
+from dynamic_graph import DynamicGraph, PreviousSimilarCommunity
 
 # node数 x 2　が遺伝子の長さ
 ## ObjectFunction.java の _arr配列の長さも変える
@@ -25,6 +25,7 @@ def get_evaluation_results(
     timestamp,
     previous_dynamic_communities,
     dynamic_communities,
+    similar_communities,
 ):
     """遺伝子の情報を与え、その遺伝子によって描画されるグラフレイアウトの評価を返す関数
 
@@ -36,6 +37,7 @@ def get_evaluation_results(
         timestamp(int): dynamic graphのタイムスタンプ
         dynamic_communities(list[set[int]]): 動的コミュニティのリスト
         previous_dynamic_communities([list[set[int]]): 前のタイムスタンプの動的コミュニティのリスト
+        similar_communities(dict[str, tuple[str, float]]): 類似コミュニティのマッピング
 
     Returns:
         [sprawl, NN, NE, EE]: 与えられた遺伝子のsprawl, clutterの評価のペア
@@ -51,6 +53,8 @@ def get_evaluation_results(
         dynamic_communities
     )
 
+    java_hashmap_data = __convert_similar_communities(similar_communities)
+
     # resは、[sprawl, NN, NE, EE] のfloat配列
     java_previous_plist = __convert_java_double_list(previous_plist)
     java_current_plist = __convert_java_double_list(current_plist)
@@ -62,6 +66,7 @@ def get_evaluation_results(
         timestamp,
         java_previous_dynamic_communities,
         java_dynamic_communities,
+        java_hashmap_data,
     )
 
     return res
@@ -126,6 +131,37 @@ def __convert_time_ordered_dynamic_communities(communities: list[set[int]] | Non
     return java_list
 
 
+def __convert_similar_communities(
+    py_dict: dict[str, list[PreviousSimilarCommunity]] | None
+):
+    """
+    Pythonの辞書をJavaのHashMap<int, List<AbstractMap.SimpleEntry<int, double>>>に変換する関数
+
+    Args:
+        py_dict (dict[str, PreviousSimilarCommunity[]]): Pythonの辞書（キーは文字列、値はPreviousSimilarCommunityのリスト）
+
+    Returns:
+        java_hashmap (Java HashMap<int, List<AbstractMap.SimpleEntry<int, double>>>): JavaのHashMap
+    """
+    if py_dict is None:
+        return None
+
+    java_hashmap = gateway.jvm.java.util.HashMap()  # type: ignore
+
+    for key, previous_similar_communities in py_dict.items():
+        # 各キーに対してSimpleEntryのリストを作成
+        java_list = gateway.jvm.java.util.ArrayList()  # type: ignore
+
+        for previous_similar_community in previous_similar_communities:
+            # PreviousSimilarCommunityのIDとsimilarityでSimpleEntryを作成
+            java_pair = gateway.jvm.java.util.AbstractMap.SimpleEntry(int(previous_similar_community.id), previous_similar_community.similarity)  # type: ignore
+            java_list.add(java_pair)  # type: ignore
+
+        java_hashmap.put(int(key), java_list)  # type: ignore
+
+    return java_hashmap
+
+
 ###### main関数: GAプログラムを呼び出す
 # ga = GA(myfunc, CHROMOSOME_LENGTH)
 # ga.GA_main_eaMuCommaLambda()
@@ -134,8 +170,8 @@ start = time.perf_counter()  # 計測開始
 
 
 def optimize_layouts():
-    # timestamps = [ i for i in range(1, 4)]
-    timestamps = [1, 2, 3]
+    timestamps = [i for i in range(1, 4)]
+    # timestamps = [1, 2]
     results = []
     previous_best_layouts = []
 

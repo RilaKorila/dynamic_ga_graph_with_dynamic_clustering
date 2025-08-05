@@ -201,20 +201,22 @@ class NSGA2:
             for cluster_id in cluster_id_list:
                 if self.similar_cluster_pos_dict.get(cluster_id):
                     # 類似のclusterが存在する場合
-                    previous_similar_cluster_id = self.similar_cluster_pos_dict[
+                    previous_similar_cluster_ids = self.similar_cluster_pos_dict[
                         cluster_id
                     ]
 
-                    previous_pos_x = previous_layout[
-                        int(previous_similar_cluster_id) * 2
-                    ]
-                    previous_pos_y = previous_layout[
-                        int(previous_similar_cluster_id) * 2 + 1
-                    ]
+                    # 類似のclusterが複数ある場合は順に処理する
+                    for previous_similar_cluster_id in previous_similar_cluster_ids:
+                        previous_pos_x = previous_layout[
+                            int(previous_similar_cluster_id) * 2
+                        ]
+                        previous_pos_y = previous_layout[
+                            int(previous_similar_cluster_id) * 2 + 1
+                        ]
 
-                    # current_layout_list のなかで previous_layout_of_similar_clusters に含まれているものはswap
-                    current_layout_list[int(cluster_id) * 2] = previous_pos_x
-                    current_layout_list[int(cluster_id) * 2 + 1] = previous_pos_y
+                        # current_layout_list のなかで previous_layout_of_similar_clusters に含まれているものはswap
+                        current_layout_list[int(cluster_id) * 2] = previous_pos_x
+                        current_layout_list[int(cluster_id) * 2 + 1] = previous_pos_y
 
         # 現在のレイアウトと前のレイアウトを結合（現在が先）
         combined_layout = current_layout_list.copy()

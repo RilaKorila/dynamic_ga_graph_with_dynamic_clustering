@@ -71,6 +71,7 @@ class HistoryEvaluationStats:
                 self.timestamp,
                 previous_dynamic_community,
                 dynamic_community,
+                self.dynamic_graph.get_previous_similarity_dict(self.timestamp),
             )
             sprawl, nnpen, nepen, eepen, time_smoothness = results
             self.nnpens.append(nnpen)
@@ -146,6 +147,7 @@ class HistoryEvaluationStats:
             self.timestamp,
             previous_dynamic_community,
             dynamic_community,
+            self.dynamic_graph.get_previous_similarity_dict(self.timestamp),
         )
         sprawl = results[0]
         clutter = self.__calc_normalized_clutter(results[1], results[2], results[3])
