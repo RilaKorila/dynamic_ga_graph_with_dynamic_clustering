@@ -1,6 +1,5 @@
 from collections import defaultdict
 from community_detect import get_community_detection_result
-from community_tracking import track_communities
 import json
 import os
 import networkx as nx
@@ -50,16 +49,6 @@ class DynamicGraph:
             timestamp: self.create_summarized_graph(community, timestamp)
             for timestamp, community in self.communities_dict.items()
         }
-
-        # 動的コミュニティの追跡結果を保存
-        self.time_ordered_dynamic_communities_dict = (
-            self.get_time_ordered_dynamic_communities_dict()
-        )
-
-        self.write_dynamic_communities_to_file(
-            DATA_DIR_PATH + "dynamic_communities/",
-            self.time_ordered_dynamic_communities_dict,
-        )
 
         # グラフを構成するnode情報を読み込む
         self.graph_info_dict = {
@@ -130,33 +119,6 @@ class DynamicGraph:
                             )
 
         return summarized_graph
-
-    def get_time_ordered_dynamic_communities_dict(self):
-        """
-        Returns:
-            dict[int, list[set[int]]]: timestampごとの動的コミュニティをリストを作成し、timestampをkey, 集約結果をvalueとしたdict
-        """
-        communities = list(self.communities_dict.values())
-        # theta値は調整可能。値が大きいほど厳密なマッチングになる
-        all_dynamic_communities = track_communities(communities, theta=0.1)
-
-        time_ordered_dynamic_communities_dict = {}
-
-        # 各タイムスタンプに対して動的コミュニティを整理
-        for timestamp in self.timestamps:
-            dynamic_communities = [set() for _ in range(len(all_dynamic_communities))]
-
-            for dynamic_community_id, community_list in enumerate(
-                all_dynamic_communities
-            ):
-                for time_idx, community in community_list:
-                    if timestamp == self.timestamps[time_idx]:
-                        dynamic_communities[dynamic_community_id] = community
-                        break
-
-            time_ordered_dynamic_communities_dict[timestamp] = dynamic_communities
-
-        return time_ordered_dynamic_communities_dict
 
     def get_dynamic_community_by_timestamp(
         self, all_dynamic_communities, target_timestamp
@@ -247,84 +209,6 @@ class DynamicGraph:
             similar_cluster_dict[k] = list(map(lambda x: x.id, v))
 
         return similar_cluster_dict
-
-    def write_dynamic_communities_to_file(
-        self, file_path, time_ordered_dynamic_communities_dict
-    ):
-        # 各タイムスタンプごとに動的コミュニティファイルを作成
-        for timestamp in self.timestamps:
-            fname = file_path + "dynamic_community_" + str(timestamp) + ".txt"
-            with open(fname, "w") as f:
-                dynamic_communities = time_ordered_dynamic_communities_dict[timestamp]
-                for id, dynamic_community in enumerate(dynamic_communities):
-                    f.write(str(id) + ":\n")
-                    if len(dynamic_community) == 0:
-                        f.write("\n")
-                    else:
-                        # dynamic_community を並び替えて、,でjoinして出力
-                        f.write(
-                            ",".join(str(node) for node in sorted(dynamic_community))
-                            + "\n"
-                        )
-
-        self._check_assigned_dynamic_community_id()
-
-    def _check_assigned_dynamic_community_id(self):
-        """
-        coms/配下のファイルに含まれるノードIDと、timestampごとに分割したdynamic_communityに含まれるノードIDが各timestampで一致していることを確認する
-        """
-        for timestamp in self.timestamps:
-            # coms/配下のファイルと、dynamic_community_1.txt の内容を比較する
-            coms_file_path = (
-                DATA_DIR_PATH
-                + f"coms/runDynamicModularity_{DATASET_NAME}_com_{str(timestamp)}_nodes.csv"
-            )
-
-            # dynamic clusteringの結果
-            dynamic_clustering_result_nodes_list = list()
-            with open(coms_file_path, "r") as f:
-                coms_file_content = f.read()
-                for line in coms_file_content.split("\n"):
-                    if line.strip() == "":
-                        continue
-                    nodes = line.split(",")
-                    sorted_nodes = sorted(nodes)
-                    dynamic_clustering_result_nodes_list.append(sorted_nodes)
-
-            # community trackingの結果
-            dc_nodes_list = list()
-            with open(
-                DATA_DIR_PATH
-                + "dynamic_communities/dynamic_community_"
-                + str(timestamp)
-                + ".txt",
-                "r",
-            ) as f:
-                dynamic_community_file_content = f.read()
-                for line in dynamic_community_file_content.split("\n"):
-                    if line.strip() == "":
-                        continue
-                    if line[-1] == ":":
-                        continue
-                    nodes = line.split(",")
-                    sorted_dc_nodes = sorted(nodes)
-                    dc_nodes_list.append(sorted_dc_nodes)
-
-            for nodes in dc_nodes_list:
-                if nodes not in dynamic_clustering_result_nodes_list:
-                    print(
-                        "WARNING: dynamic_community_"
-                        + str(timestamp)
-                        + ".txt に存在しないノードが含まれています。"
-                    )
-                    print(nodes)
-            for nodes in dynamic_clustering_result_nodes_list:
-                if nodes not in dc_nodes_list:
-                    print(
-                        "WARNING: dynamic_community_"
-                        + str(timestamp)
-                        + ".txt の内容が不足しています。"
-                    )
 
     def write_similar_cluster_dict_of_all_timestamps_to_file(self, file_path):
         """

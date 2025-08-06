@@ -16,7 +16,6 @@ public class Vertex {
 	boolean isForcused = true;
 	int meanInDegree = 0;
 	int meanOutDegree = 0;
-	int dynamicCommunityId = -1;
 
 	public void setId(int id) {
 		this.id = id;
@@ -107,14 +106,6 @@ public class Vertex {
 	 */
 	public int getNodeNum() {
 		return nodes.size();
-	}
-
-	public int getDynamicCommunityId() {
-		return dynamicCommunityId;
-	}
-
-	public void setDynamicCommunityId(final int id) {
-		dynamicCommunityId = id;
 	}
 
 }

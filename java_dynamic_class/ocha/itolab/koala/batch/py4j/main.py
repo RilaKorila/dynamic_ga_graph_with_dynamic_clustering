@@ -23,8 +23,6 @@ def get_evaluation_results(
     previous_plist,
     current_plist,
     timestamp,
-    previous_dynamic_communities,
-    dynamic_communities,
     similar_communities,
 ):
     """遺伝子の情報を与え、その遺伝子によって描画されるグラフレイアウトの評価を返す関数
@@ -35,8 +33,6 @@ def get_evaluation_results(
         previous_plist (float[]): 前の世代の遺伝子
         current_plist (float[]): 遺伝子を表現する配列
         timestamp(int): dynamic graphのタイムスタンプ
-        dynamic_communities(list[set[int]]): 動的コミュニティのリスト
-        previous_dynamic_communities([list[set[int]]): 前のタイムスタンプの動的コミュニティのリスト
         similar_communities(dict[str, tuple[str, float]]): 類似コミュニティのマッピング
 
     Returns:
@@ -46,12 +42,6 @@ def get_evaluation_results(
         Javaからは、sprawl, NN, NE, EEを受け取る。
         受け取った NN, NE, EE からclutterを算出する。
     """
-    java_previous_dynamic_communities = __convert_time_ordered_dynamic_communities(
-        previous_dynamic_communities
-    )
-    java_dynamic_communities = __convert_time_ordered_dynamic_communities(
-        dynamic_communities
-    )
 
     java_hashmap_data = __convert_similar_communities(similar_communities)
 
@@ -64,8 +54,6 @@ def get_evaluation_results(
         java_previous_plist,
         java_current_plist,
         timestamp,
-        java_previous_dynamic_communities,
-        java_dynamic_communities,
         java_hashmap_data,
     )
 
@@ -105,30 +93,6 @@ def __convert_java_double_list(pylist: list[float] | None):
         java_double_array[i] = val  # type: ignore
 
     return java_double_array
-
-
-def __convert_time_ordered_dynamic_communities(communities: list[set[int]] | None):
-    """
-    PythonのリストをJavaのリストに変換する関数
-
-    Args:
-        communities (list[set[int]]): Pythonのリスト（各要素はノードIDの集合）
-
-    Returns:
-        java_list (Java List<List<Integer>>): Javaのリスト（各集合がソートされたリストに）
-    """
-    if communities is None:
-        return None
-
-    java_list = gateway.jvm.java.util.ArrayList()  # type: ignore
-
-    for py_set in communities:
-        java_inner_list = gateway.jvm.java.util.ArrayList()  # type: ignore
-        for val in sorted(py_set):  # 昇順に並べ替える
-            java_inner_list.add(int(val))  # type: ignore # JavaのList<Integer>にするためにstrに変換
-        java_list.add(java_inner_list)  # type: ignore
-
-    return java_list
 
 
 def __convert_similar_communities(

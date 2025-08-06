@@ -10,13 +10,14 @@ public class ObjectFunction {
 	static private Map<String, Map<String, Double>> cache_result = new HashMap<>();
 
 	public double[] obfunc(final int generation, final int id, final double[] previous_gene, final double[] gene,
-			final int timestamp, final List<List<Integer>> previousDynamicCommunities,
-			final List<List<Integer>> dynamicCommunities,
+			final int timestamp,
 			final Map<Integer, List<AbstractMap.SimpleEntry<Integer, Double>>> similarCommunities) {
+
+		// TODO: Timesmoothness, Sprawlterの内部でgraphをそれぞれ生成している点を1つにまとめる
 
 		// TimeSmoothnessEvaluator の計算
 		final double timeSmoothness = TimeSmoothnessEvaluator.execute(previous_gene, gene,
-				timestamp, previousDynamicCommunities, dynamicCommunities, similarCommunities);
+				timestamp, similarCommunities);
 
 		// Sprawlter の計算
 		// TODO 前のレイアウトは無視して、現在のレイアウトのみSprawlterで評価する点を再検討する
@@ -51,9 +52,6 @@ public class ObjectFunction {
 			cache_result.put(casheKey, sprawlterResultMap);
 		}
 
-		sprawlterResultMap = KoalaToSprawlter.execute(gene, timestamp); // Experiment 1-S
-		// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
-		cache_result.put(casheKey, sprawlterResultMap);
 		return sprawlterResultMap;
 	}
 

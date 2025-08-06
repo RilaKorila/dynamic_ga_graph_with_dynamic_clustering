@@ -43,20 +43,6 @@ class HistoryEvaluationStats:
         """
         NN, NE, EEの, time_smoothnessの算出をし、それぞれのリストに計算結果を保存する。ここでは正規化はされない。
         """
-        dynamic_community = (
-            self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
-        )
-
-        # 1つ目のtimestampの場合は、previous_dynamic_community は None
-        if self.has_previous_layout:
-            previous_dynamic_community = (
-                self.dynamic_graph.time_ordered_dynamic_communities_dict.get(
-                    self.previous_timestamp
-                )
-            )
-        else:
-            previous_dynamic_community = None
-
         for id, individual in enumerate(individuals):
             current_layout_plist = individual[: self.current_layout_gene_len]
             if self.has_previous_layout:
@@ -69,8 +55,6 @@ class HistoryEvaluationStats:
                 previous_layout_plist,
                 current_layout_plist,
                 self.timestamp,
-                previous_dynamic_community,
-                dynamic_community,
                 self.dynamic_graph.get_previous_similarity_dict(self.timestamp),
             )
             sprawl, nnpen, nepen, eepen, time_smoothness = results
@@ -124,14 +108,6 @@ class HistoryEvaluationStats:
             clutterの算出方法は3種類
             正規化, 標準化, 定数でわる, の3種類の処理をかけたpenaltyをそれぞれ係数でたしあわせて算出する
         """
-        previous_dynamic_community = (
-            self.dynamic_graph.time_ordered_dynamic_communities_dict.get(
-                self.previous_timestamp
-            )
-        )
-        dynamic_community = (
-            self.dynamic_graph.time_ordered_dynamic_communities_dict.get(self.timestamp)
-        )
 
         current_layout_plist = individual[: self.current_layout_gene_len]
         if self.has_previous_layout:
@@ -145,8 +121,6 @@ class HistoryEvaluationStats:
             previous_layout_plist,
             current_layout_plist,
             self.timestamp,
-            previous_dynamic_community,
-            dynamic_community,
             self.dynamic_graph.get_previous_similarity_dict(self.timestamp),
         )
         sprawl = results[0]
