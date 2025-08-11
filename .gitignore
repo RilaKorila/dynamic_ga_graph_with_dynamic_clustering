@@ -28,3 +28,4 @@ data/graph_info_*.json
 
 Koala-manygen/layoutsToEvaluate
 .vscode/settings.json
+bin/
