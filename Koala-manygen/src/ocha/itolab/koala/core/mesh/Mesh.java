@@ -106,7 +106,7 @@ public class Mesh {
 			// Vertexが持つnodeの平均次数をカウント
 			calcVertexAverageNodeDegree(v);
 
-			if (!checkForcusedCondition_NodeColor(v)) { // Experiment 1-S
+			if (!checkForcusedCondition_NodeSize(v)) { // metanodeのnode数で判断
 				counter++;
 				v.setIsForcusedFalse();
 			}
@@ -162,7 +162,7 @@ public class Mesh {
 	// 条件に関するメソッドはprivateで宣言.
 	// 条件を変更するときは別メソッドとして作成すること
 	private boolean checkForcusedCondition_NodeSize(Vertex v) {
-		return v.nodes.size() > 4;
+		return v.nodes.size() > 3;
 	}
 
 	private boolean checkForcusedCondition_NodeColor(Vertex v) {

@@ -23,22 +23,9 @@ public class KoalaToSprawlterOfForcusedVertex {
 	 * Execute Koala and Sprawlter
 	 */
 	public static Map<String, Double> execute(final double init[], final int timestamp) {
-		// Cit-HepPhのデータを読み込む
-		final String infile = dataset.getDataDirPath() + "connectivity_timestamp_" + timestamp + ".csv";
+		System.out.println("Forcus条件適用あり");
 
-		// double List から LinLogLayoutクラスのinitialPosに変換
-		generateInitPositionList(init);
-
-		// ---------- initial positionに基づいてグラフを生成 ----------
-		graph = GraphFileReader.readConnectivity(infile, timestamp);
-		graph.generateEdges();
-		for (int i = 0; i < SMOOTHING_ITERATION; i++) {
-			// ドロネー三角法を適用
-			MeshTriangulator.triangulate(graph.mesh);
-			// ラプラシアンスムーザーを適用
-			MeshSmoother.smooth(graph.mesh, graph.maxDegree, 0.05);
-		}
-		graph.mesh.finalizePosition();
+		graph = getGraph(init, timestamp);
 
 		// writeLayoutFile(graph);
 
@@ -63,6 +50,27 @@ public class KoalaToSprawlterOfForcusedVertex {
 		results.put("EE", 0.0);
 
 		return results;
+	}
+
+	public static Graph getGraph(final double init[], final int timestamp) {
+		// データを読み込む
+		final String infile = dataset.getDataDirPath() + "connectivity_timestamp_" + timestamp + ".csv";
+
+		// double List から LinLogLayoutクラスのinitialPosに変換
+		generateInitPositionList(init);
+
+		// ---------- initial positionに基づいてグラフを生成 ----------
+		graph = GraphFileReader.readConnectivity(infile, timestamp);
+		graph.generateEdges();
+		for (int i = 0; i < SMOOTHING_ITERATION; i++) {
+			// ドロネー三角法を適用
+			MeshTriangulator.triangulate(graph.mesh);
+			// ラプラシアンスムーザーを適用
+			MeshSmoother.smooth(graph.mesh, graph.maxDegree, 0.05);
+		}
+		graph.mesh.finalizePosition();
+
+		return graph;
 	}
 
 	static void generateInitPositionList(double init[]) {

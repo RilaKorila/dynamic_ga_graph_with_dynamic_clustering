@@ -43,7 +43,7 @@ public class TimeSmoothnessEvaluator {
      * @param graph                 グラフ
      * @param dynamicCommunityIdMap ノードリストと動的コミュニティIDのマッピング
      */
-    private static void assignDynamicCommunityId(final Graph graph,
+    public static void assignDynamicCommunityId(final Graph graph,
             final HashMap<List<Integer>, Integer> dynamicCommunityIdMap) {
         for (Vertex vertex : graph.mesh.getVertices()) {
             // Nodeのリストを文字列のリストに変換
@@ -69,7 +69,7 @@ public class TimeSmoothnessEvaluator {
      * @param dynamicCommunities
      * @return ノードリストがキー、動的コミュニティIDが値のマッピング
      */
-    private static HashMap<List<Integer>, Integer> getDynamicCommunityIdMap(
+    public static HashMap<List<Integer>, Integer> getDynamicCommunityIdMap(
             final List<List<Integer>> dynamicCommunities) {
         final HashMap<List<Integer>, Integer> dynamicCommunityIdMap = new HashMap<>(dynamicCommunities.size());
 
@@ -153,7 +153,7 @@ public class TimeSmoothnessEvaluator {
      * @param scale 座標が1以下の場合、ユークリッド距離を取ると小さくなり過ぎてしまうのでscaleで等倍処理する
      * @return 2点間のユークリッド距離
      */
-    private static double calculateDistance(final double[] p1, final double[] p2, final double scale) {
+    public static double calculateDistance(final double[] p1, final double[] p2, final double scale) {
         double dx = Math.abs(p1[0] - p2[0]) * scale;
         double dy = Math.abs(p1[1] - p2[1]) * scale;
 

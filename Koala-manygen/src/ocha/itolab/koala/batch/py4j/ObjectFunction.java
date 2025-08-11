@@ -15,7 +15,10 @@ public class ObjectFunction {
 			final Map<Integer, List<AbstractMap.SimpleEntry<Integer, Double>>> similarCommunities) {
 
 		// TimeSmoothnessEvaluator の計算
-		final double timeSmoothness = TimeSmoothnessEvaluator.execute(previous_gene, gene,
+		// final double timeSmoothness = TimeSmoothnessEvaluator.execute(previous_gene,
+		// gene, timestamp, previousDynamicCommunities, dynamicCommunities,
+		// similarCommunities);
+		final double timeSmoothness = TimeSmoothnessEvaluatorOfForcusedVertex.execute(previous_gene, gene,
 				timestamp, previousDynamicCommunities, dynamicCommunities, similarCommunities);
 
 		// Sprawlter の計算
@@ -46,14 +49,12 @@ public class ObjectFunction {
 			sprawlterResultMap = cache_result.get(casheKey);
 		} else {
 			// execute KoalaToSprawlter
-			sprawlterResultMap = KoalaToSprawlter.execute(gene, timestamp); // Experiment 1-S
-			// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
+			// sprawlterResultMap = KoalaToSprawlter.execute(gene, timestamp); // Experiment
+			// 1-S
+			sprawlterResultMap = KoalaToSprawlterOfForcusedVertex.execute(gene, timestamp);
 			cache_result.put(casheKey, sprawlterResultMap);
 		}
 
-		sprawlterResultMap = KoalaToSprawlter.execute(gene, timestamp); // Experiment 1-S
-		// results_map = KoalaToSprawlterOfForcusedVertex.execute(_arr);
-		cache_result.put(casheKey, sprawlterResultMap);
 		return sprawlterResultMap;
 	}
 
