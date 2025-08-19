@@ -175,11 +175,11 @@ def optimize_layouts():
     results = []
     previous_best_layouts = []
 
+    dynamic_graph = DynamicGraph(timestamps)
+
     # 各タイムスタンプでの最適化を実行
     for i, timestamp in enumerate(timestamps):
         print(f"Optimizing layout {i+1} of {len(timestamps)}...")
-
-        dynamic_graph = DynamicGraph(timestamps)
 
         ga = NSGA2(
             obfunc=get_evaluation_results,

@@ -1,20 +1,19 @@
 package ocha.itolab.koala.constants;
 
 public enum Dataset {
-        FACEBOOK(
-        "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/facebook/",
-        "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/facebook/coms/",
-        "facebook"),
-        CIT_HEP_PH(
-        "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/Cit-HepPh/",
-        "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/Cit-HepPh/coms/",
-        "Cit-HepPh"),
-        TIMESMOOTHNESS_SAMPLE(
-        "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/timesmoothnessSample/",
-        "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/timesmoothnessSample/coms/",
-        "timesmoothnessSample");
+    FACEBOOK(
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/facebook/",
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/facebook/filtered_coms/",
+            "facebook"),
+    CIT_HEP_PH(
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/Cit-HepPh/",
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/Cit-HepPh/filtered_coms/",
+            "Cit-HepPh"),
+    TIMESMOOTHNESS_SAMPLE(
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/timesmoothnessSample/",
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/timesmoothnessSample/filtered_coms/",
+            "timesmoothnessSample");
 
-    
     private String dataDirPath;
     private String comsPath;
     private String name;
@@ -32,7 +31,7 @@ public enum Dataset {
     public String getComsPath() {
         return this.comsPath;
     }
-    
+
     public String getName() {
         return this.name;
     }

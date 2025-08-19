@@ -10,7 +10,7 @@ def get_community_detection_result(timestamp: int):
     Get the community detection (DynaMo) result from the csv file.
     """
     # ファイルから読み込む
-    fname = f"{DATA_DIR_PATH}coms/runDynamicModularity_{DATASET_NAME}_com_{timestamp}_nodes.csv"
+    fname = f"{DATA_DIR_PATH}filtered_coms/runDynamicModularity_{DATASET_NAME}_com_{timestamp}_nodes.csv"
 
     communities = []
     with open(fname, "r") as f:

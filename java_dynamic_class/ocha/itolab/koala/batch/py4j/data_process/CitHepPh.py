@@ -108,10 +108,15 @@ def __write_filtered_coms(timestamp, alive_nodes):
 
     # 生きているnodeのみ残す
     graph_info = {}
+    filtered_data = []
+
     for community_id, nodes in com_nodes.items():
         filtered_nodes = list(filter(lambda node_id: node_id in alive_nodes, nodes))
         graph_info[community_id] = filtered_nodes
-        __write_csv(filtered_com_fname, filtered_nodes)
+        filtered_data.append(filtered_nodes)
+
+    # 一括でファイルに書き出し
+    __write_csv_batch(filtered_com_fname, filtered_data)
 
     # jsonにも書き出す
     dump_graph_info(graph_info, timestamp)
@@ -144,10 +149,14 @@ def load_graph_info(timestamp):
         }
 
 
-def __write_csv(fname, nodes):
-    # filtered_coms/配下にcsvファイルを作成
-    with open(fname, "a") as f:
-        f.write(",".join(nodes) + "\n")
+def __write_csv_batch(fname, data_list):
+    """
+    配列に貯めたデータを一括でファイルに書き出す
+    既存ファイルがある場合は上書きする
+    """
+    with open(fname, "w") as f:  # "w"で上書きモード
+        for nodes in data_list:
+            f.write(",".join(nodes) + "\n")
 
 
 def __write_connectivity(nodes, edges, timestamp):
