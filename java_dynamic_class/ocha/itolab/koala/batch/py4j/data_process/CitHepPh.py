@@ -147,7 +147,7 @@ def load_graph_info(timestamp):
 def __write_csv(fname, nodes):
     # filtered_coms/配下にcsvファイルを作成
     with open(fname, "a") as f:
-        f.write(",".join(nodes))
+        f.write(",".join(nodes) + "\n")
 
 
 def __write_connectivity(nodes, edges, timestamp):
