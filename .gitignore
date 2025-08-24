@@ -16,12 +16,15 @@ _supergraph_result/
 constants.py
 ResourceFile.java
 ResourceFile.class
+Dataset.java
+Dataset.class
 
 # 実行のたびに結果が変わるのでgitignoreに追加
 data/community_csv/coauthors_community.csv
 data/Cit-HepPh/*
 data/facebook/*
 data/timesmoothnessSample/*
+data/NBAF_coauthors/*
 
 data/graph_info_*.json
 

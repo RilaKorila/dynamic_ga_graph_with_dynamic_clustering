@@ -94,6 +94,8 @@ def __parallel_move_layout(pos):
                 pos[node_id][0] + abs(min_x),
                 pos[node_id][1] + abs(min_y),
             )
+    else:
+        moved_pos = pos.copy()
 
     return moved_pos
 

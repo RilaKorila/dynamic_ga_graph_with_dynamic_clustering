@@ -22,7 +22,7 @@ public class LayoutFileWriter {
 
 			// node description
 			// id, x座標, y座標, 所属する親ノードのid, nodeと対応する著者名
-			line = Integer.toString(i) + "," + node.x + "," + node.y + "," + node.vertex.getId();
+			line = Integer.toString(node.id) + "," + node.x + "," + node.y + "," + node.vertex.getId();
 			for (int j = 0; j < node.getNumDescription(); j++)
 				line += ("," + node.getDescription(j));
 			writeOneLine(line);

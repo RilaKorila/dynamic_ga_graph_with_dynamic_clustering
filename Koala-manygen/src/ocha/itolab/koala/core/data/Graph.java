@@ -32,21 +32,20 @@ public class Graph {
 		edgemap = new HashMap<String, Edge>();
 
 		// for each node
-		for (int i = 0; i < nodes.size(); i++) {
-			Node node = nodes.get(i);
+		for (Node node : nodes) {
 
 			// for each node referred node
 			if (node.connected != null) {
 				for (int j = 0; j < node.connected.length; j++) {
-					int id = node.connected[j];
-					String key = Integer.toString(node.id) + "-" + Integer.toString(id);
+					int connected_node_id = node.connected[j];
+					String key = Integer.toString(node.id) + "-" + Integer.toString(connected_node_id);
 					Edge e = (Edge) edgemap.get(key);
 					if (e == null) {
 						e = new Edge();
 						e.id = edges.size();
 						edges.add(e);
 						edgemap.put(key, e);
-						Node node2 = nodes.get(id);
+						final Node node2 = getNode(connected_node_id);
 						e.nodes[0] = node;
 						e.nodes[1] = node2;
 						node.connectedEdge.add(e);
@@ -58,15 +57,15 @@ public class Graph {
 			// for each node referred node
 			if (node.connecting != null) {
 				for (int j = 0; j < node.connecting.length; j++) {
-					int id = node.connecting[j];
-					String key = Integer.toString(id) + "-" + Integer.toString(node.id);
+					int connecting_node_id = node.connecting[j];
+					String key = Integer.toString(connecting_node_id) + "-" + Integer.toString(node.id);
 					Edge e = (Edge) edgemap.get(key);
 					if (e == null) {
 						e = new Edge();
 						e.id = edges.size();
 						edges.add(e);
 						edgemap.put(key, e);
-						Node node2 = nodes.get(id);
+						final Node node2 = getNode(connecting_node_id);
 						e.nodes[0] = node2;
 						e.nodes[1] = node;
 						node2.connectedEdge.add(e);
@@ -158,6 +157,21 @@ public class Graph {
 		}
 
 		return false;
+	}
+
+	/**
+	 * ノードIDが合致するノードを取得する
+	 * 
+	 * @param id ノードのID
+	 * @return ノード
+	 */
+	public Node getNode(int id) {
+		// FIXME getNode メソッドが O(n) なのでパフォーマンス劣化あり
+		for (int i = 0; i < nodes.size(); i++) {
+			if (nodes.get(i).id == id)
+				return nodes.get(i);
+		}
+		return null;
 	}
 
 }

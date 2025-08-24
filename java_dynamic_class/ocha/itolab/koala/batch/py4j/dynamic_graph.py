@@ -6,13 +6,16 @@ import os
 import networkx as nx
 
 # データ変更
-import data_process.CitHepPh as data_process
+# import data_process.CitHepPh as data_process
 
 # from data_process.facebook as data_process
 # import data_process.timesmoothnessSample as data_process
+import data_process.NBAF_coauthors as data_process
 
 # データ変更
-from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
+# from constants import CIT_HEP_PH_DIR_PATH as DATA_DIR_PATH
+
+from constants import NBAF_COAUTHORS_DIR_PATH as DATA_DIR_PATH
 
 # from constants import FACEBOOK_DIR_PATH as DATA_DIR_PATH
 # from constants import TIMESMOOTHNESS_SAMPLE_DIR_PATH as DATA_DIR_PATH
@@ -277,7 +280,7 @@ class DynamicGraph:
             # coms/配下のファイルと、dynamic_community_1.txt の内容を比較する
             coms_file_path = (
                 DATA_DIR_PATH
-                + f"coms/runDynamicModularity_{DATASET_NAME}_com_{str(timestamp)}_nodes.csv"
+                + f"filtered_coms/runDynamicModularity_{DATASET_NAME}_com_{str(timestamp)}_nodes.csv"
             )
 
             # dynamic clusteringの結果

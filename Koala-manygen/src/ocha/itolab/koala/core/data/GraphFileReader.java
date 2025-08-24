@@ -70,9 +70,13 @@ public class GraphFileReader {
 
 				if (phase == 0) {
 					node = new Node();
-					node.id = graph.nodes.size();
+
+					// node_idを取得
+					String node_id = token.nextToken();
+					node.id = Integer.parseInt(node_id);
 					graph.nodes.add(node);
-					token.nextToken();
+
+					// node_labelを取得
 					int ndesc = token.countTokens();
 					node.description = new String[ndesc];
 					for (int i = 0; i < ndesc; i++)

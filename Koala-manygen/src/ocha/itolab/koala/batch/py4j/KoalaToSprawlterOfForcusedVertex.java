@@ -17,7 +17,7 @@ public class KoalaToSprawlterOfForcusedVertex {
 	// static String infile = ResourceFile.DATA_CSV.path();
 	static Graph graph;
 	static int SMOOTHING_ITERATION = 100;
-	static Dataset dataset = Dataset.CIT_HEP_PH; // データ変更
+	static Dataset dataset = Dataset.NBAF_COAUTHORS; // データ変更
 
 	/**
 	 * Execute Koala and Sprawlter

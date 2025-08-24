@@ -16,7 +16,7 @@ public class MeshGenerator {
 	static final int CLUSTERING_LINLOG = 2;
 	static final int CLUSTERING_IMPORT = 3;
 	static int clusteringMode = CLUSTERING_IMPORT;
-	static Dataset dataset = Dataset.CIT_HEP_PH; // データ変更
+	static Dataset dataset = Dataset.NBAF_COAUTHORS; // データ変更
 
 	private static String getClusteringModeName(int mode) { // デバッグ用のメソッド
 		switch (mode) {
@@ -106,7 +106,7 @@ public class MeshGenerator {
 				// ファイルの内容に従って、メタノードに属するnodeを追加
 				String[] node_ids = line.split(",");
 				for (String node_id : node_ids) {
-					final Node node = (Node) graph.nodes.get(Integer.parseInt(node_id));
+					final Node node = graph.getNode(Integer.parseInt(node_id));
 					vertex.nodes.add(node);
 					node.setVertex(vertex);
 				}
