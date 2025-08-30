@@ -170,7 +170,7 @@ start = time.perf_counter()  # 計測開始
 
 
 def optimize_layouts():
-    timestamps = [i for i in range(1, 17)]
+    timestamps = [i for i in range(4, 17)]
     # timestamps = [1, 2]
     results = []
     previous_best_layouts = []
@@ -206,16 +206,18 @@ def optimize_layouts():
         )
 
         # 次のレイアウトのベースとして使用する上位n個の解を選択
-        previous_best_layouts = select_best_layouts(pop, n=5)  # 上位5個を選択
+        previous_best_layouts = select_best_layouts(pop, timestamp, n=5)  # 上位5個を選択
 
     return results
 
 
-def select_best_layouts(population, n=5):
+def select_best_layouts(population, timestamp,n=5):
     """パレートフロントから上位n個の良い解を選択する
+    選択した遺伝子情報はファイルに保存する
 
     Args:
         population: 最適化後の個体群
+        timestamp: タイムスタンプ
         n: 選択する解の数
 
     Returns:
@@ -223,19 +225,30 @@ def select_best_layouts(population, n=5):
     """
     # パレートフロントの個体をsprawlとclutterの重み付け和でソート
     weighted_scores = []
-    for ind in population:
+    for i, ind in enumerate(population):
         sprawl, clutter, time_smoothness = ind.fitness.values
         # sprawlとclutterの重み付け和を計算（重みは調整可能）
         weighted_score = 0.3 * sprawl + 0.3 * clutter + 0.4 * time_smoothness
         # weighted_score = time_smoothness 検証用
-        weighted_scores.append((ind, weighted_score))
+        weighted_scores.append((ind, weighted_score, i))
 
     # スコアでソート
     weighted_scores.sort(key=lambda x: x[1])
 
-    # 上位n個の解を返す
-    return [ind for ind, _ in weighted_scores[:n]]
+    # 選択された遺伝子情報をtxtファイルに保存
+    save_selected_genes(weighted_scores, timestamp)
 
+    # 上位n個の解を返す
+    return [ind for ind, _, _ in weighted_scores[:n]]
+
+def save_selected_genes(selected_indi, timestamp):
+    """選択された遺伝子情報をtxtファイルに保存する
+    """
+    with open(constants.PNG_PATH +"selected_genes.txt", "a") as f:
+        for ind, weighted_score, i in selected_indi:
+            f.write(f"timestamp: {timestamp}\n")
+            f.write(f"id:{i}\n")
+            f.write(f"score:{weighted_score}\n")
 
 end = time.perf_counter()  # 計測終了
 print("処理にかかった時間：{:.2f}秒".format(end - start))

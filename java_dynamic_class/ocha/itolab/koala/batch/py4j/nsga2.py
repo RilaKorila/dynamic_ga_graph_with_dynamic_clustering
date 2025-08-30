@@ -187,10 +187,15 @@ class NSGA2:
             current_layout_list.append(x)
             current_layout_list.append(y)
 
+        if self.has_previous_layout:
+            # 前のtimestampがある場合には、選択されたlayout番号を保存
+            random_index = random.randint(0, len(self.previous_best_layouts) - 1)
+            self.save_selected_genes(random_index, self.timestamp)
+
         # 前のタイムスタンプのレイアウトがある場合は、それと組み合わせる
         # TODO previous_best_layoutsの数は調整できるようにしたい
         previous_layout = (
-            random.choice(self.previous_best_layouts)[:]
+            self.previous_best_layouts[random_index][:]
             if self.has_previous_layout
             else []
         )
@@ -427,6 +432,14 @@ class NSGA2:
 
             f.write("\n" + str(gen) + "generation\n")
             np.savetxt(f, fitnesses, delimiter=",")
+
+    def save_selected_genes(self, index, timestamp):
+        """選択された遺伝子情報をtxtファイルに保存する
+        """
+        with open(PNG_PATH +"selected_genes_in_nsga2.txt", "a") as f:
+            f.write(f"timestamp: {timestamp}\n")
+            f.write(f"previous_layout_id:{index}\n")
+            f.write(f"current_layout_id:{self.layout_counter}\n")
 
     def __create_directory(self, directory_name):
         os.makedirs(directory_name, exist_ok=True)
