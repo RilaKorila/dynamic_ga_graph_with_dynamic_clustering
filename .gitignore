@@ -25,6 +25,7 @@ data/Cit-HepPh/*
 data/facebook/*
 data/timesmoothnessSample/*
 data/NBAF_coauthors/*
+data/unused_NBAF_coauthors/*
 
 data/graph_info_*.json
 
