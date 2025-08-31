@@ -381,9 +381,9 @@ class NSGA2:
         self.history_evaluation_stats.write_csv()
 
         # 既存の評価関数を2つのレイアウトで個別に評価
-        for ind in invalid_ind:
+        for id, ind in enumerate(invalid_ind):
             # 現在のレイアウトの評価
-            current_fitness = self.toolbox.evaluate(gen, gen, ind)  # type: ignore
+            current_fitness = self.toolbox.evaluate(gen, id, ind)  # type: ignore
             # 前のレイアウトがない場合は現在のレイアウトの評価のみ
             sprawl = current_fitness[0]
             clutter = current_fitness[1]
