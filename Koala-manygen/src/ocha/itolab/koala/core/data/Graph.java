@@ -31,6 +31,12 @@ public class Graph {
 		edges.clear();
 		edgemap = new HashMap<String, Edge>();
 
+		// パフォーマンス改善: node_id -> Node のマップを作成 (getNodeはO(n)なので呼び出し回数を削減する目的)
+		final HashMap<Integer, Node> nodeMap = new HashMap<Integer, Node>();
+		for (Node node : nodes) {
+			nodeMap.put(node.id, node);
+		}
+
 		// for each node
 		for (Node node : nodes) {
 
@@ -45,11 +51,13 @@ public class Graph {
 						e.id = edges.size();
 						edges.add(e);
 						edgemap.put(key, e);
-						final Node node2 = getNode(connected_node_id);
-						e.nodes[0] = node;
-						e.nodes[1] = node2;
-						node.connectedEdge.add(e);
-						node2.connectingEdge.add(e);
+						final Node node2 = nodeMap.get(connected_node_id);
+						if (node2 != null) {
+							e.nodes[0] = node;
+							e.nodes[1] = node2;
+							node.connectedEdge.add(e);
+							node2.connectingEdge.add(e);
+						}
 					}
 				}
 			}
@@ -65,11 +73,13 @@ public class Graph {
 						e.id = edges.size();
 						edges.add(e);
 						edgemap.put(key, e);
-						final Node node2 = getNode(connecting_node_id);
-						e.nodes[0] = node2;
-						e.nodes[1] = node;
-						node2.connectedEdge.add(e);
-						node.connectingEdge.add(e);
+						final Node node2 = nodeMap.get(connecting_node_id);
+						if (node2 != null) {
+							e.nodes[0] = node2;
+							e.nodes[1] = node;
+							node2.connectedEdge.add(e);
+							node.connectingEdge.add(e);
+						}
 					}
 				}
 			}
