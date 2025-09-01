@@ -12,7 +12,11 @@ public enum Dataset {
     TIMESMOOTHNESS_SAMPLE(
             "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/timesmoothnessSample/",
             "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/timesmoothnessSample/filtered_coms/",
-            "timesmoothnessSample");
+            "timesmoothnessSample"),
+    NBAF_COAUTHORS(
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/NBAF_coauthors/",
+            "/Users/ayana/vis/dynamic_ga_graph_with_dynamic_clustering/data/NBAF_coauthors/filtered_coms/",
+            "NBAF_coauthors");
 
     private String dataDirPath;
     private String comsPath;
