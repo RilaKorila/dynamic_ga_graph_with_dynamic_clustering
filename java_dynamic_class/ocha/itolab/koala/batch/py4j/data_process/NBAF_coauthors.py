@@ -194,3 +194,36 @@ def __write_connectivity(nodes, edges, timestamp):
             # 内向きエッジ
             incoming = incoming_edges.get(node_id, [])
             f.write(",".join(incoming) + "\n")
+
+
+if __name__ == "__main__":
+    ## 論文掲載用とGraph統計情報の計算
+    import networkx as nx
+
+    timestamps = [i for i in range(5, 17)]
+    density_list = []
+
+    for timestamp in timestamps:
+        edges = __get_edges(timestamp)
+        nodes = __get_nodes(timestamp)
+
+        # networkxのグラフを作成
+        graph = nx.Graph()
+        graph.add_nodes_from(nodes)
+        graph.add_edges_from(edges)
+
+        # densityを計算
+        density = nx.density(graph)
+        print(f"Density of graph at timestamp {timestamp}: {density}")
+        density_list.append(density)
+
+    # density_listを折れ線グラフで可視化
+    import matplotlib.pyplot as plt
+
+    timestamp_labels = [year for year in range(2002, 2014)]
+
+    plt.plot(timestamp_labels, density_list)
+    plt.xlabel("Timestamp")
+    plt.ylabel("Density")
+    plt.title("Density of Dataset1 Graph")
+    plt.savefig(f"nbaf_coauthors_density_list.png")
