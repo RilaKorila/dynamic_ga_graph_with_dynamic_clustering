@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
-from matplotlib.cm import ScalarMappable
 import numpy as np
 import sys
 import os
@@ -47,8 +46,8 @@ def save_basic_scatter(
     fig, ax = plt.subplots(figsize=(6, 5))
 
     # 初期世代と最適化後の点をプロット
-    ax.plot(initial_plot_x, initial_plot_y, "b.", label="Initial")
-    ax.plot(optimized_plot_x, optimized_plot_y, "r.", label="Optimized")
+    ax.plot(initial_plot_x, initial_plot_y, "b.", label="Initial", markersize=30)
+    ax.plot(optimized_plot_x, optimized_plot_y, "r.", label="Optimized", markersize=30)
 
     # ラベルの追加
     for i, (x, y) in enumerate(zip(initial_plot_x, initial_plot_y)):
@@ -60,10 +59,19 @@ def save_basic_scatter(
     ax.set_ylim(axis_limits["ymin"], axis_limits["ymax"])
 
     # グラフの設定
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label, fontsize=20)
+    ax.set_ylabel(y_label, fontsize=20)
     ax.set_title(title)
-    ax.legend(loc="upper right")
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(
+            0.5,
+            1.02,
+        ),
+        borderaxespad=0,
+        ncol=2,
+        fontsize=16,
+    )
     ax.grid(True)
 
     # 保存して閉じる
@@ -113,6 +121,7 @@ def save_basic_scatter_with_color_by_timesmoothness(
         norm=norm_initial,
         alpha=0.7,
         edgecolors="gray",
+        s=100,  # 点のサイズ
         label="Initial",
     )
 
@@ -124,6 +133,7 @@ def save_basic_scatter_with_color_by_timesmoothness(
         cmap="Reds",
         norm=norm_optimized,
         edgecolors="gray",
+        s=100,  # 点のサイズ
         label="Optimized",
     )
     # ラベル付け
@@ -134,10 +144,19 @@ def save_basic_scatter_with_color_by_timesmoothness(
 
     ax.set_xlim(axis_limits["xmin"], axis_limits["xmax"])
     ax.set_ylim(axis_limits["ymin"], axis_limits["ymax"])
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-    ax.set_title(title)
-    ax.legend(loc="upper right")
+    ax.set_xlabel(x_label, fontsize=20)
+    ax.set_ylabel(y_label, fontsize=20)
+
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(
+            0.5,
+            1.02,
+        ),
+        borderaxespad=0,
+        ncol=2,
+        fontsize=16,
+    )
     ax.grid(True)
 
     # カラーバー（timesmoothness用、赤のみ）
@@ -305,7 +324,7 @@ def plot_generation_scatters_with_color_by_timesmoothness(generations, output_di
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print(
-            "Usage: python show_scatter_plot.py <input_file_path> <output_directory> [--color]"
+            "Usage: python show_scatter_plot.py <input_file_path: fitness.txt> <output_directory> [--color]"
         )
         print("Options:")
         print("  --color: Use timesmoothness color mapping")

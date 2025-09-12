@@ -10,3 +10,6 @@ PYTHON_SCRIPT="java_dynamic_class/ocha/itolab/koala/batch/py4j/show_scatter_plot
 
 # Pythonスクリプトを呼び出し（PYTHONPATHやvenvがあれば必要に応じて調整）
 python3 "$PYTHON_SCRIPT" "$TXT_FILE" "$OUTPUT_DIR"
+
+# Clutter, Sprawlを軸に、Timesmoothnessを色分けして散布図を作成
+python3 "$PYTHON_SCRIPT" "$TXT_FILE" "$OUTPUT_DIR" --color 
