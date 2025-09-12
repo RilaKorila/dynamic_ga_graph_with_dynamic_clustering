@@ -434,9 +434,8 @@ class NSGA2:
             np.savetxt(f, fitnesses, delimiter=",")
 
     def save_selected_genes(self, index, timestamp):
-        """選択された遺伝子情報をtxtファイルに保存する
-        """
-        with open(PNG_PATH +"selected_genes_in_nsga2.txt", "a") as f:
+        """選択された遺伝子情報をtxtファイルに保存する"""
+        with open(PNG_PATH + "selected_genes_in_nsga2.txt", "a") as f:
             f.write(f"timestamp: {timestamp}\n")
             f.write(f"previous_layout_id:{index}\n")
             f.write(f"current_layout_id:{self.layout_counter}\n")

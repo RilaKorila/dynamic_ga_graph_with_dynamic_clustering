@@ -132,7 +132,7 @@ def __convert_time_ordered_dynamic_communities(communities: list[set[int]] | Non
 
 
 def __convert_similar_communities(
-    py_dict: dict[str, list[PreviousSimilarCommunity]] | None
+    py_dict: dict[str, list[PreviousSimilarCommunity]] | None,
 ):
     """
     Pythonの辞書をJavaのHashMap<int, List<AbstractMap.SimpleEntry<int, double>>>に変換する関数
@@ -206,12 +206,14 @@ def optimize_layouts():
         )
 
         # 次のレイアウトのベースとして使用する上位n個の解を選択
-        previous_best_layouts = select_best_layouts(pop, timestamp, n=5)  # 上位5個を選択
+        previous_best_layouts = select_best_layouts(
+            pop, timestamp, n=5
+        )  # 上位5個を選択
 
     return results
 
 
-def select_best_layouts(population, timestamp,n=5):
+def select_best_layouts(population, timestamp, n=5):
     """パレートフロントから上位n個の良い解を選択する
     選択した遺伝子情報はファイルに保存する
 
@@ -241,14 +243,15 @@ def select_best_layouts(population, timestamp,n=5):
     # 上位n個の解を返す
     return [ind for ind, _, _ in weighted_scores[:n]]
 
+
 def save_selected_genes(selected_indi, timestamp):
-    """選択された遺伝子情報をtxtファイルに保存する
-    """
-    with open(constants.PNG_PATH +"selected_genes.txt", "a") as f:
+    """選択された遺伝子情報をtxtファイルに保存する"""
+    with open(constants.PNG_PATH + "selected_genes.txt", "a") as f:
         for ind, weighted_score, i in selected_indi:
             f.write(f"timestamp: {timestamp}\n")
             f.write(f"id:{i}\n")
             f.write(f"score:{weighted_score}\n")
+
 
 end = time.perf_counter()  # 計測終了
 print("処理にかかった時間：{:.2f}秒".format(end - start))
