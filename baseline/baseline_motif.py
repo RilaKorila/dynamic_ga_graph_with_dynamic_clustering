@@ -177,7 +177,8 @@ def largest_cycle_size(G: nx.Graph) -> int:
 
 
 def max_degree(G: nx.Graph) -> int:
-    return max((d for _, d in G.degree()), default=0)
+    # G.degree() : Dict[str, int] (a DegreeView mapping nodes to their degree)
+    return max((d for _, d in G.degree()), default=0)  # type: ignore
 
 
 def pseudo_depth(G: nx.Graph) -> int:
@@ -433,10 +434,10 @@ def draw_transition_frame(
             continue  # このフレームでは見えない
 
         pat_prev = (
-            ev_prev.comm_embed.get(cid).outer if cid in ev_prev.comm_embed else None
+            ev_prev.comm_embed.get(cid).outer if cid in ev_prev.comm_embed else None  # type: ignore
         )
         pat_curr = (
-            ev_next.comm_embed.get(cid).outer if cid in ev_next.comm_embed else None
+            ev_next.comm_embed.get(cid).outer if cid in ev_next.comm_embed else None  # type: ignore
         )
 
         # 枠線スタイル（サイズ変化）
@@ -494,6 +495,78 @@ def draw_transition_frame(
         ax.text(x, y, str(cid), ha="center", va="center", fontsize=6)
 
 
+def save_coordinates(
+    result: PipelineResult, out_dir: str, target_timestamp: str
+) -> None:
+    """
+    メタノード（コミュニティ）の座標をCSVファイルに保存
+    target_timestamp: 特定の時刻を指定（Noneの場合は全時刻の最大サイズで正規化）
+    """
+    import csv
+
+    # 描画サイズの計算（draw_transition_frameと同じ計算式）
+    size_scale = (0.05, 0.15)  # draw_transition_frameのデフォルト値
+
+    # 特定の時刻でのサイズ正規化
+    target_slice = None
+    for slice in result.slices:
+        if slice.timestamp == target_timestamp:
+            target_slice = slice
+            break
+
+    if target_slice is None:
+        raise ValueError(f"Timestamp {target_timestamp} not found in slices")
+
+    # その時刻での最大ノード数
+    target_sizes = [
+        sub.number_of_nodes() for sub in target_slice.comm_subgraphs.values()
+    ]
+    max_size = max(target_sizes) if target_sizes else 1
+
+    print(
+        f"[INFO] Using timestamp {target_timestamp} for size normalization (max_size={max_size})"
+    )
+
+    # メタノード座標の保存
+    coords_file = os.path.join(out_dir, f"metanode_coordinates_{target_timestamp}.csv")
+    with open(coords_file, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["metanode_id", "x", "y", "node_count", "draw_radius"])
+
+        for cid, (x, y) in result.artifacts.comm_positions.items():
+            # 特定の時刻でのノード数
+            target_sub = target_slice.comm_subgraphs.get(cid)
+            node_count = target_sub.number_of_nodes() if target_sub is not None else 0
+
+            # 描画に使われる半径を計算
+            draw_radius = (
+                size_scale[0]
+                + (size_scale[1] - size_scale[0]) * math.sqrt(node_count / max_size)
+                if node_count > 0
+                else 0.0
+            )
+            writer.writerow([cid, x, y, node_count, draw_radius])
+
+    # ノードとコミュニティのマッピングの保存
+    mapping_file = os.path.join(out_dir, f"node_to_community_{target_timestamp}.csv")
+    with open(mapping_file, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["node_id", "community_id"])
+
+        for node_id, comm_id in result.artifacts.node_to_comm.items():
+            writer.writerow([node_id, comm_id])
+
+    # 個別ノード座標の保存（コミュニティ中心からの相対位置）
+    node_coords_file = os.path.join(out_dir, f"node_coordinates_{target_timestamp}.csv")
+    with open(node_coords_file, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["node_id", "community_id", "community_x", "community_y"])
+
+        for node_id, comm_id in result.artifacts.node_to_comm.items():
+            comm_x, comm_y = result.artifacts.comm_positions[comm_id]
+            writer.writerow([node_id, comm_id, comm_x, comm_y])
+
+
 def render_step9_animation(
     result: PipelineResult, out_dir: str, steps: int = 6, dpi: int = 160
 ) -> Tuple[List[str], Optional[str]]:
@@ -506,6 +579,11 @@ def render_step9_animation(
     ensure_dir(out_dir)
 
     frame_paths: List[str] = []
+
+    # 最初のtimestampの座標を保存
+    if result.slices:
+        save_coordinates(result, out_dir, result.slices[0].timestamp)
+
     for i in range(len(result.slices) - 1):
         t_from = result.slices[i].timestamp
         t_to = result.slices[i + 1].timestamp
@@ -531,6 +609,9 @@ def render_step9_animation(
             plt.close(fig)
             frame_paths.append(out_path)
 
+            # 座標を保存
+            save_coordinates(result, out_dir, t_to)
+
     # GIF化（任意）
     gif_path = None
     try:
@@ -538,7 +619,7 @@ def render_step9_animation(
 
         imgs = [imageio.imread(p) for p in frame_paths]
         gif_path = os.path.join(out_dir, "step9_animation.gif")
-        imageio.mimsave(gif_path, imgs, duration=0.6)  # 1フレーム ~0.6秒
+        imageio.mimsave(gif_path, imgs, duration=0.6)  # type: ignore # 1フレーム ~0.6秒
     except Exception:
         pass
 
